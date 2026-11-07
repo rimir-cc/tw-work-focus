@@ -1,0 +1,100 @@
+title: $:/plugins/rimir/work-focus/engine
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+\function wf.areas() [all[shadows+tiddlers]tag[$:/tags/rimir/work-focus/area]!is[draft]]
+\function wf.snapshot() [[$:/temp/rimir/work-focus/snapshot]get[text]]
+\function wf.acted-json() [[$:/temp/rimir/work-focus/acted]get[text]]
+\function wf.listed(area) [function[wf.snapshot]jsonget[areas],<area>]
+\function wf.hits(area) [function[wf.listed],<area>has[title]]
+\function wf.count(area) [function[wf.listed],<area>] +[count[]]
+\function wf.error(area) [function[wf.snapshot]jsonget[errors],<area>]
+\function wf.checked() [function[wf.snapshot]jsonget[checked]]
+\function wf.muted() [function[wf.snapshot]jsonget[muted]]
+\function wf.mute-until(item) [[$:/rimir/work-focus/mutes]get[text]jsonget<item>]
+\function wf.level(area) [<area>get[wf.level]trim[]] :intersection[enlist[alert warning hint]] ~[[hint]]
+\function wf.level-areas(level) [function[wf.areas]] :filter[function[wf.level],<currentTiddler>match<level>]
+\function wf.has-chip(area) [function[wf.count],<area>!match[0]] [function[wf.error],<area>] +[first[]]
+\function wf.dock-areas() [enlist[alert warning hint]] :map:flat[function[wf.level-areas],<currentTiddler>] :filter[function[wf.has-chip],<currentTiddler>]
+\function wf.label(item) [<item>get[caption]] ~[<item>get[subtitle]] ~[<item>]
+\function wf.caption(area) [<area>get[caption]] ~[<area>]
+\function wf.no-tab() [[$:/rimir/work-focus/no-tab]]
+\function wf.tab-of(area) [<area>get[wf.tab]trim[]!is[blank]] ~[function[wf.no-tab]]
+\function wf.tabs() [function[wf.areas]] :filter[function[wf.tab-of],<currentTiddler>match<wf.no-tab>] :then[function[wf.no-tab]] [function[wf.areas]get[wf.tab]trim[]!is[blank]unique[]]
+\function wf.tab-label(tab) [<tab>!match<wf.no-tab>] ~[[General]]
+\function wf.active-tab() [[$:/state/rimir/work-focus/tab]get[text]] :intersection[function[wf.tabs]] ~[function[wf.tabs]first[]]
+\function wf.multi-tab() [function[wf.tabs]count[]compare:integer:gt[1]then[yes]]
+\function wf.tab-areas(tab) [function[wf.areas]] :filter[function[wf.tab-of],<currentTiddler>match<tab>]
+\function wf.tab-count(tab) [function[wf.tab-areas],<tab>] :reduce[function[wf.count],<currentTiddler>add<accumulator>] ~[[0]]
+\function wf.acted() [function[wf.acted-json]jsonindexes[]]
+\function wf.acted-in(area) [function[wf.acted]] :filter[function[wf.acted-json]jsonget<currentTiddler>,[area]match<area>]
+\function wf.acted-mark(item) [function[wf.acted-json]jsonget<item>,[mark]]
+\function wf.is-acted(item) [function[wf.acted]match<item>]
+\function wf.rows(area) [function[wf.hits],<area>] -[function[wf.acted]]
+\function wf.has-content(area) [function[wf.rows],<area>] [function[wf.acted-in],<area>] [function[wf.error],<area>] +[first[]]
+\function wf.view-areas(tab) [function[wf.tab-areas],<tab>] :filter[function[wf.has-content],<currentTiddler>]
+\function wf.limit() [[$:/config/rimir/work-focus/section-limit]get[text]trim[]regexp[^\d+$]] ~[[5]]
+\function wf.position() [[$:/config/rimir/work-focus/position]get[text]trim[]] :intersection[enlist[top-left top-right bottom-left bottom-right]] ~[[top-left]]
+\function wf.time(date) [<date>format:date[0hh:0mm]]
+\function wf.day(date) [<date>wf-days[]match[0]then[today]] ~[<date>wf-days[]match[-1]then[yesterday]] ~[<date>format:date[ddd DD mmm]]
+\function wf.day8(date) [<date>format:date<wf-day8-format>]
+\function wf.resolve(expr) [wf-date<expr>,[20000101]]
+\function wf.param(name) [<action>get<name>trim[]!is[blank]]
+\function wf.move-field() [function[wf.param],[wf.field]] ~[<date-field>]
+\function wf.move-to() [function[wf.param],[wf.to]] ~[<value>]
+\function wf.until() [function[wf.param],[wf.until]] ~[<value>]
+\function wf.short-day(expr) [function[wf.resolve],<expr>format:date<wf-fmt-short>]
+\function wf.days-before(values, v) [enlist<values>allbefore<v>] :map[function[wf.resolve],<currentTiddler>]
+\function wf.day-taken(values, v) [function[wf.days-before],<values>,<v>] :intersection[function[wf.resolve],<v>]
+\function wf.distinct-days(values) [enlist<values>] :filter[function[wf.day-taken],<values>,<currentTiddler>count[]match[0]]
+\function wf.new-title() [function[wf.param],[wf.title]] ~[<wf-default-title>] :map[subfilter<currentTiddler>] +[first[]]
+\function wf.tag-text() [<action>get[wf.mode]match[remove]then[-]else[+]] [<action>get[wf.tag]] +[join[ ]]
+\function wf.info-part(name) [all[shadows+tiddlers]tag[$:/tags/rimir/work-focus/info-part]] :filter[get[wf.name]match<name>] +[first[]]
+
+\procedure wf-info(item, area)
+\whitespace trim
+<$let date-field={{{ [<area>get[wf.date-field]trim[]] }}} currentTiddler=<<item>>>
+<$list filter="[<area>get[wf.info]enlist-input[]]" variable="token">
+<$let name={{{ [<token>split[:]first[]] }}} param={{{ [<token>split[:]butfirst[]join[:]] }}} part={{{ [function[wf.info-part],<name>] }}}>
+<span class="wf-part"><$transclude $tiddler=<<part>> $mode="inline"/></span>
+</$let>
+</$list>
+</$let>
+\end
+
+\procedure wf-day8-format() [UTC]ddd DD mmm
+
+\procedure wf-fmt-short() [UTC]ddd DD
+
+\procedure wf-fmt-ddd() [UTC]ddd
+
+\procedure wf-fmt-date() [UTC]0DD mmm
+
+\procedure wf-default-title() [<item>addsuffix[/new]]
+
+\procedure wf-finished(item, area, mark)
+<$action-wf-check acted-item=<<item>> acted-area=<<area>> acted-mark=<<mark>>/>
+\end
+
+\procedure wf-close()
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/open"/>
+\end
+
+\procedure wf-toggle()
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/open" text={{{ [[$:/temp/rimir/work-focus/open]get[text]match[yes]then[no]else[yes]] }}}/>
+<$action-sendmessage $message="tm-focus-selector" $param=".wf-dock-toggle"/>
+\end
+
+\procedure wf-refresh()
+<$action-wf-check clear-acted="yes"/>
+\end
+
+\procedure wf-unmute()
+<$action-setfield $tiddler="$:/rimir/work-focus/mutes" $index=<<item>>/>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/acted" $index=<<item>>/>
+<$action-wf-check/>
+\end
+
+\procedure wf-catch()
+<$action-navigate $to=<<dom-data-wf-item>>/>
+\end

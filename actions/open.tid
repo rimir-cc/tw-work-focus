@@ -1,0 +1,8 @@
+title: $:/plugins/rimir/work-focus/actions/open
+tags: $:/tags/rimir/work-focus/action
+caption: Open
+wf.icon: ↗
+wf.group: open
+wf.recipe: open
+wf.order: 10
+

@@ -1,0 +1,10 @@
+title: $:/plugins/rimir/work-focus/recipes/tag
+tags: $:/tags/rimir/work-focus/recipe
+wf.name: tag
+caption: Add or remove a tag
+wf.mark: <$text text={{{ [function[wf.tag-text]] }}}/>
+wf.hint: <$text text={{{ [function[wf.tag-text]] }}}/>
+
+<$let sign={{{ [<action>get[wf.mode]match[remove]then[-]else[+]] }}}>
+<$action-listops $tiddler=<<item>> $tags={{{ [<action>get[wf.tag]format:titlelist[]addprefix<sign>] }}}/>
+</$let>

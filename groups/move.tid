@@ -1,0 +1,9 @@
+title: $:/plugins/rimir/work-focus/groups/move
+tags: $:/tags/rimir/work-focus/group
+wf.name: move
+caption: Move
+wf.icon: ↷
+wf.order: 10
+wf.default: $:/plugins/rimir/work-focus/actions/day-strip
+wf.default-value: +1d
+

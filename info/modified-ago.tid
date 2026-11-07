@@ -1,0 +1,15 @@
+title: $:/plugins/rimir/work-focus/info/modified-ago
+tags: $:/tags/rimir/work-focus/info-part
+type: text/vnd.tiddlywiki
+caption: Changed … ago
+wf.name: modified-ago
+
+\whitespace trim
+<!-- "changed <<n>>d ago" from the item's modified date. -->
+<$let n={{{ [<item>get[modified]wf-days[]abs[]] }}}>
+<%if [<n>match[0]] %>
+changed today
+<%elseif [<n>!is[blank]] %>
+<$text text={{{ [<n>addprefix[changed ]addsuffix[d ago]] }}}/>
+<%endif%>
+</$let>

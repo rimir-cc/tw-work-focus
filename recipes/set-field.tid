@@ -1,0 +1,14 @@
+title: $:/plugins/rimir/work-focus/recipes/set-field
+tags: $:/tags/rimir/work-focus/recipe
+wf.name: set-field
+wf.requires: [function[wf.param],[wf.field]]
+wf.requires-message: no field to set
+caption: Set a field
+wf.mark: ✓ <$text text={{{ [<action>get[caption]] }}}/>
+wf.hint: <$text text={{{ [<action>get[wf.field]] }}}/> becomes <$text text={{{ [<action>get[wf.value]] }}}/>
+
+<$let field={{{ [function[wf.param],[wf.field]] }}}>
+<%if [<field>!is[blank]] %>
+<$action-setfield $tiddler=<<item>> $field=<<field>> $value={{{ [<action>get[wf.value]] }}}/>
+<%endif%>
+</$let>

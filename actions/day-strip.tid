@@ -1,0 +1,12 @@
+title: $:/plugins/rimir/work-focus/actions/day-strip
+tags: $:/tags/rimir/work-focus/action
+caption: Move date
+wf.icon: ↷
+wf.group: move
+wf.recipe: move-date
+wf.filter: [<date-field>!is[blank]]
+wf.tiles: [function[wf.distinct-days],[today +1d mon tue +1w]]
+wf.tile-label: {{{ [<value>match[today]then[Today]] ~[<value>match[+1d]then[Tmrw]] ~[function[wf.resolve],<value>format:date<wf-fmt-ddd>] }}}
+wf.tile-sub: {{{ [function[wf.resolve],<value>format:date<wf-fmt-date>] }}}
+wf.order: 10
+

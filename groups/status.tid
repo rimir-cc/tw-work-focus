@@ -1,0 +1,7 @@
+title: $:/plugins/rimir/work-focus/groups/status
+tags: $:/tags/rimir/work-focus/group
+wf.name: status
+caption: Status
+wf.icon: ✓
+wf.order: 30
+

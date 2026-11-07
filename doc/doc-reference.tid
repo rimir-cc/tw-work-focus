@@ -1,0 +1,106 @@
+created: 20261106120000000
+modified: 20261106120000000
+rdt.hub-category: tools
+rdt.hub-category-name: Tools
+rdt.hub-order: 5
+rdt.order: 6
+rdt.plugin-key: work-focus
+rdt.plugin-name: work focus
+rdt.plugin-subtitle: Dock with attention counts and a drag action ring
+rdt.section: Reference
+title: $:/plugins/rimir/work-focus/doc/reference
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! Configuration
+
+|!Tiddler |!Default |!Meaning |
+|`$:/config/rimir/work-focus/enabled` |`yes` |`no` removes the dock and the ring |
+|`$:/config/rimir/work-focus/position` |`top-left` |`top-left`, `top-right`, `bottom-left`, `bottom-right` |
+|`$:/config/rimir/work-focus/date-format` |`YYYY0MM0DD` |Format `wf-date` writes when the field has no sample value. A field that already holds 8 digits or a TW date keeps its shape |
+|`$:/config/rimir/work-focus/section-limit` |`5` |Items per area before "+ N more" |
+
+!! Area (tag `$:/tags/rimir/work-focus/area`)
+
+Order = tag order. The first area whose filter returns an item claims it. Drafts are never areas or items. Area filters see the global functions and macros (`$:/tags/Global`, `$:/tags/Macro`), as on the page. A filter that throws or reports `Filter Error: …` shows `!` with the message as tooltip.
+
+|!Field |!Meaning |
+|`caption` |Name in dock tooltip and panel |
+|`wf.filter` |Filter returning the item titles |
+|`wf.level` |`alert`, `warning` or `hint` (default `hint`). Dock order: alert, warning, hint |
+|`wf.date-field` |Field the info parts and date actions use (variable `date-field`) |
+|`wf.tab` |Tab name; blank = "General" |
+|`wf.info` |Space separated parts: `date-relative`, `date-relative:<field>`, `modified-ago`, `field:<name>` |
+|`wf.when-past`, `wf.when-today`, `wf.when-future` |Wikitext for `date-relative`; `<<n>>` = number of days. Defaults `<<n>>d ago`, `today`, `in <<n>>d` |
+|`wf.when-past.<field>`, `wf.when-today.<field>`, `wf.when-future.<field>` |Wording for `date-relative:<field>` (e.g. `wf.when-future.due-date: due in <<n>>d`); same defaults |
+
+!! Group (tag `$:/tags/rimir/work-focus/group`)
+
+|!Field |!Meaning |
+|`wf.name` |Key that actions name in `wf.group`. The first group with a name wins |
+|`caption`, `wf.icon`, `wf.order` |Label, icon, sort order |
+|`wf.parent` |Name of the parent group (3 levels at most) |
+|`wf.default` |Action run when you release on the group itself |
+|`wf.default-value` |Tile value of that action to run (Move: `+1d`) |
+
+Shipped groups: `move`, `mute`, `status`, `create`, `open`. A group without tiles is not shown (`create` has no shipped action).
+
+!! Action (tag `$:/tags/rimir/work-focus/action`)
+
+|!Field |!Meaning |
+|`caption`, `wf.icon`, `wf.order` |Tile text, icon, order |
+|`wf.group` |Group name. ''Without it the action is not shown'' |
+|`wf.filter` |The action applies when the result is ''non-empty''. Source = the item. A broken filter (or `Filter Error: …`) means no match. Blank = always |
+|`wf.recipe` |Recipe name. Blank: the tiddler's text is the action string |
+|`wf.tiles` |Filter giving tile values (one tile each). Bracket `+`/`-`: `[[today]] [[+1d]]`. `[function[wf.distinct-days],[today +1d mon]]` drops a date expression that falls on an earlier one's day |
+|`wf.tile-label`, `wf.tile-sub` |Wikitext for a tile's label and sub line (`<<value>>`) |
+|`wf.hint` |Wikitext shown while hovering a tile; blank: the recipe's |
+|`wf.mark` |Wikitext for the acted mark; blank: the recipe's, then the tile caption |
+|`wf.no-mark` |`yes`: no mark (Open) |
+|`wf.hidden` |`yes`: never shown |
+|`wf.replaces` |Titles of actions this one hides while it matches |
+|`wf.requires` |Filter (engine functions available) whose first value must be non-blank, else nothing runs: no mark, no check, notification `wf.requires-message` (default "Nothing to do"). Blank: the recipe's |
+|recipe parameters |`wf.field`, `wf.to`, `wf.until`, `wf.value`, `wf.title`, `wf.fields`, `wf.tag`, `wf.mode` — see the recipes |
+
+Variables in filters, hints, marks, tile labels and action strings: `item`, `area`, `date-field`, `value`, `action`; `currentTiddler` = `item`. They also see the global functions and macros and the `wf.*` engine functions. Draft actions, groups and recipes are ignored.
+
+!! Recipe (tag `$:/tags/rimir/work-focus/recipe`)
+
+`wf.name`, `caption`, `wf.mark`, `wf.hint`, `wf.deferred` (`yes`: the action sets its own mark later), `wf.requires` / `wf.requires-message` (see Action), text = the action string.
+
+|!Shipped |!Parameters |
+|`move-date` |`wf.field` (default: the area's date field), `wf.to` (default: the tile value). No field: fails with "no field to set" |
+|`mute` |`wf.until` (default: the tile value) |
+|`open` |none |
+|`set-field` |`wf.field`, `wf.value`. Blank `wf.field`: fails with "no field to set" |
+|`tag` |`wf.tag`, `wf.mode` (`add` or `remove`) |
+|`create` |`wf.title` (filter), `wf.fields` (JSON: field name to filter) |
+
+!! Shipped actions
+
+`actions/day-strip` (Move date: Today, Tmrw, Mon, Tue, +1w), `actions/mute` (2 days, Mon, 1 week), `actions/open`. A tile on the same day as an earlier one is left out (Sunday: no Mon, it is Tmrw; Monday: no Tue and no +1w). Tile labels: Today, Tmrw, then weekday; sub line = the date only (`0DD mmm`). Dates in hints use `ddd DD mmm`.
+
+!! Date expressions
+
+`today`, `+Nd`, `-Nd`, `+Nw`, `mon` … `sun` (the next such day, never today), `YYYYMMDD`.
+
+!! Filter operators
+
+|!Operator |!Result |
+|`[wf-date[<expr>],[<sample>]]` |One date string in the shape of the sample |
+|`[<dates>wf-days[]]` |Whole days from today per input; blank and non-dates dropped |
+
+!! Info parts (tag `$:/tags/rimir/work-focus/info-part`)
+
+`wf.name` is the token in `wf.info`; the text is wikitext with `item`, `area`, `date-field`, `param` (the part after `:`).
+
+|!Shipped |!Shows |
+|`date-relative` |The area's date field relative to today (`wf.when-*` wording) |
+|`date-relative:<field>` |That field instead, with `wf.when-*.<field>` wording |
+|`modified-ago` |"changed 3d ago" |
+|`field:<name>` |The field's value; a tiddler (or a title list) by caption |
+
+</$fill>
+</$transclude>

@@ -1,0 +1,62 @@
+title: $:/plugins/rimir/work-focus/panel
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+<!-- Open panel: rendered only while $:/temp/rimir/work-focus/open is yes; renders only snapshot titles. -->
+
+<$let checked=<<wf.checked>> tab=<<wf.active-tab>> multi=<<wf.multi-tab>> limit=<<wf.limit>>>
+<div class="wf-panel" tabindex="-1">
+<div class="wf-panel-head">
+<span class="wf-panel-title">Work focus</span>
+<%if [<checked>!is[blank]] %><span class="wf-panel-checked"><$text text={{{ [function[wf.day],<checked>] [function[wf.time],<checked>] +[join[ ]addprefix[checked ]] }}}/></span><%endif%>
+<$button class="wf-btn wf-panel-refresh" actions=<<wf-refresh>> tooltip="Check all areas now">↻ Check now</$button>
+</div>
+<%if [<multi>match[yes]] %>
+<div class="wf-tabs" role="tablist">
+<$list filter="[function[wf.tabs]]" variable="t">
+<$button class={{{ wf-tab [<t>match<tab>then[wf-tab-on]] +[join[ ]] }}} set="$:/state/rimir/work-focus/tab" setTo=<<t>> role="tab">
+<$text text={{{ [function[wf.tab-label],<t>] }}}/><em class="wf-tab-n"><$text text={{{ [function[wf.tab-count],<t>] }}}/></em>
+</$button>
+</$list>
+</div>
+<%endif%>
+<div class="wf-panel-body">
+<$list filter="[function[wf.view-areas],<tab>]" variable="area" emptyMessage="""<div class="wf-empty">Nothing needs attention</div>""">
+<$let level={{{ [function[wf.level],<area>] }}} error={{{ [function[wf.error],<area>] }}} more-state={{{ [[$:/temp/rimir/work-focus/more/]addsuffix<area>] }}} shown={{{ [<more-state>get[text]match[yes]then[999999]] ~[<limit>] }}} rest={{{ [function[wf.rows],<area>] +[count[]subtract<shown>] }}}>
+<div class={{{ wf-section [[wf-level-]addsuffix<level>] +[join[ ]] }}}>
+<div class="wf-section-head"><span class="wf-bar"/><$text text={{{ [function[wf.caption],<area>] }}}/></div>
+<%if [<error>!is[blank]] %><div class="wf-error"><$text text=<<error>>/></div><%endif%>
+<$list filter="[function[wf.rows],<area>] +[limit<shown>]" variable="item">
+{{||$:/plugins/rimir/work-focus/item}}
+</$list>
+<%if [<rest>compare:integer:gt[0]] %>
+<$button class="wf-more" set=<<more-state>> setTo="yes"><$text text={{{ [<rest>addprefix[+ ]addsuffix[ more]] }}}/></$button>
+<%endif%>
+<$list filter="[function[wf.acted-in],<area>]" variable="item">
+{{||$:/plugins/rimir/work-focus/item}}
+</$list>
+</div>
+</$let>
+</$list>
+</div>
+<$let muted={{{ [function[wf.muted]] +[count[]] }}} show-state="$:/temp/rimir/work-focus/show-muted" showing={{{ [[$:/temp/rimir/work-focus/show-muted]get[text]match[yes]] }}}>
+<%if [<muted>!match[0]] %>
+<div class="wf-foot">
+<span class="wf-foot-count"><$text text={{{ [<muted>addprefix[🔕 ]addsuffix[ muted]] }}}/></span>
+<$button class="wf-link wf-show-muted" set=<<show-state>> setTo={{{ [<showing>match[yes]then[no]else[yes]] }}}><$text text={{{ [<showing>match[yes]then[hide]else[show]] }}}/></$button>
+</div>
+<%if [<showing>match[yes]] %>
+<div class="wf-muted-list">
+<$list filter="[function[wf.muted]]" variable="item">
+<div class="wf-muted-item">
+<$link to=<<item>> class="wf-muted-label"><$text text={{{ [function[wf.label],<item>] }}}/></$link>
+<span class="wf-muted-until"><$text text={{{ [function[wf.mute-until],<item>] :map[function[wf.day8],<currentTiddler>] +[addprefix[until ]] }}}/></span>
+<$button class="wf-link wf-unmute" actions=<<wf-unmute>>>unmute</$button>
+</div>
+</$list>
+</div>
+<%endif%>
+<%endif%>
+</$let>
+</div>
+</$let>

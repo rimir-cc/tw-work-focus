@@ -1,0 +1,10 @@
+title: $:/plugins/rimir/work-focus/actions/mute
+tags: $:/tags/rimir/work-focus/action
+caption: Mute
+wf.icon: 🔕
+wf.group: mute
+wf.recipe: mute
+wf.tiles: [function[wf.distinct-days],[+2d mon +1w]]
+wf.tile-label: {{{ [<value>match[+2d]then[2 days]] ~[<value>match[+1w]then[1 week]] ~[function[wf.resolve],<value>format:date<wf-fmt-ddd>addprefix[until ]] }}}
+wf.order: 10
+

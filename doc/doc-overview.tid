@@ -1,0 +1,50 @@
+created: 20261106120000000
+modified: 20261106120000000
+rdt.hub-category: tools
+rdt.hub-category-name: Tools
+rdt.hub-order: 5
+rdt.order: 1
+rdt.plugin-key: work-focus
+rdt.plugin-name: work focus
+rdt.plugin-subtitle: Dock with attention counts and a drag action ring
+rdt.section: Overview
+title: $:/plugins/rimir/work-focus/doc/overview
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! What it does
+
+A dock in a corner of the page shows how many things need you. Each count is an //area//: a config tiddler with a filter, for example "tasks overdue", "due today", "started". Click the dock and a panel lists the items. Press an item and drag it sideways: a half ring of action tiles opens. Hover a group (Move, Mute, Status, …) to fan out its tiles, release on one to run it. The item is not opened.
+
+The plugin knows nothing about your data. Areas, extra actions and extra groups are config tiddlers in your wiki.
+
+!! How you use it
+
+# The dock shows one pill per area that has items (alert, then warning, then hint) and the time of the last check. ↻ checks again.
+# Click the dock: the panel opens. Tabs appear when areas name different tabs. An area shows 5 items, then "+ N more".
+# Click an item to open it. The panel stays open, so you can triage.
+# Press an item, drag more than 5 pixels (touch: hold 400 ms, then drag). The ring opens on the side of the panel that faces free space.
+# Hover a group for 150 ms: its tiles fan out. Release on a tile to run it, or on a group to run its default tile. Esc, release elsewhere, or losing the window cancels.
+# The item stays in the panel with a mark ("→ Mon 9", "🔕 until Mon 9") until the next check.
+# Click outside the panel to close it. Esc closes it too.
+
+!! Counts are a snapshot
+
+The area filters run on reload, on ↻ and after an action. They never run while you edit, so the dock costs nothing while you type. Edit a date and the counts stay until you check again.
+
+!! Where the configuration lives
+
+|!What |!Where |
+|Areas |tiddlers tagged `$:/tags/rimir/work-focus/area` |
+|Groups of the ring |tag `$:/tags/rimir/work-focus/group` |
+|Actions (tiles) |tag `$:/tags/rimir/work-focus/action` |
+|Recipes (action templates) |tag `$:/tags/rimir/work-focus/recipe` |
+|Info parts (lines under an item) |tag `$:/tags/rimir/work-focus/info-part` |
+|Settings |`$:/config/rimir/work-focus/*` (see the settings tab) |
+
+See //Reference// for every field and //Examples// for ready configurations.
+
+</$fill>
+</$transclude>

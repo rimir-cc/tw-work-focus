@@ -1,0 +1,8 @@
+title: $:/plugins/rimir/work-focus/groups/open
+tags: $:/tags/rimir/work-focus/group
+wf.name: open
+caption: Open
+wf.icon: ↗
+wf.order: 50
+wf.default: $:/plugins/rimir/work-focus/actions/open
+

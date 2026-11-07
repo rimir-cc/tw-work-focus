@@ -1,0 +1,23 @@
+title: $:/plugins/rimir/work-focus/dock
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+<!-- Closed pill strip: reads only the snapshot. Engine functions in scope via layer. -->
+
+<$let checked=<<wf.checked>>>
+<div class="wf-dock">
+<$button class="wf-dock-toggle" actions=<<wf-toggle>> tooltip="Work focus: open or close the panel" aria-label="Work focus">
+<$list filter="[function[wf.dock-areas]]" variable="area" emptyMessage="""<span class="wf-chip-none">✓</span>""">
+<$let level={{{ [function[wf.level],<area>] }}} count={{{ [function[wf.count],<area>] }}} error={{{ [function[wf.error],<area>] }}}>
+<%if [<error>!is[blank]] %>
+<span class={{{ wf-chip wf-chip-error [[wf-level-]addsuffix<level>] +[join[ ]] }}} title=<<error>>><span class="wf-chip-n">!</span></span>
+<%else%>
+<span class={{{ wf-chip [[wf-level-]addsuffix<level>] +[join[ ]] }}} title={{{ [function[wf.caption],<area>] [<count>] +[join[: ]] }}}><span class="wf-chip-n"><$text text=<<count>>/></span></span>
+<%endif%>
+</$let>
+</$list>
+<%if [<checked>!is[blank]] %><span class="wf-dock-time" title={{{ [function[wf.day],<checked>addprefix[checked ]] [function[wf.time],<checked>] +[join[ ]] }}}><$text text={{{ [function[wf.time],<checked>] }}}/></span><%endif%>
+</$button>
+<$button class="wf-dock-refresh" actions=<<wf-refresh>> tooltip="Check now" aria-label="Check now">↻</$button>
+</div>
+</$let>

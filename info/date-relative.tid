@@ -1,0 +1,17 @@
+title: $:/plugins/rimir/work-focus/info/date-relative
+tags: $:/tags/rimir/work-focus/info-part
+type: text/vnd.tiddlywiki
+caption: Date relative to today
+wf.name: date-relative
+
+\whitespace trim
+<!-- date-relative[:<field>] – the area's date field (or field <<param>>) relative to today. Wording from the area's wf.when-past / wf.when-today / wf.when-future (<<n>> = days); with a param from wf.when-past.<field> etc. -->
+<$let field={{{ [<param>trim[]!is[blank]] ~[<date-field>] }}} suffix={{{ [<param>trim[]!is[blank]addprefix[.]] }}} days={{{ [<item>get<field>wf-days[]] }}} n={{{ [<days>abs[]] }}}>
+<%if [<days>compare:integer:lt[0]] %>
+<span class="wf-when wf-when-past"><$transclude $tiddler=<<area>> $field={{{ [[wf.when-past]addsuffix<suffix>] }}} $mode="inline"><$text text={{{ [<n>addsuffix[d ago]] }}}/></$transclude></span>
+<%elseif [<days>match[0]] %>
+<span class="wf-when wf-when-today"><$transclude $tiddler=<<area>> $field={{{ [[wf.when-today]addsuffix<suffix>] }}} $mode="inline">today</$transclude></span>
+<%elseif [<days>compare:integer:gt[0]] %>
+<span class="wf-when wf-when-future"><$transclude $tiddler=<<area>> $field={{{ [[wf.when-future]addsuffix<suffix>] }}} $mode="inline"><$text text={{{ [<n>addprefix[in ]addsuffix[d]] }}}/></$transclude></span>
+<%endif%>
+</$let>

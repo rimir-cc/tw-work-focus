@@ -1,0 +1,73 @@
+created: 20261106120000000
+modified: 20261106120000000
+rdt.hub-category: tools
+rdt.hub-category-name: Tools
+rdt.hub-order: 5
+rdt.order: 4
+rdt.plugin-key: work-focus
+rdt.plugin-name: work focus
+rdt.plugin-subtitle: Dock with attention counts and a drag action ring
+rdt.section: Examples
+title: $:/plugins/rimir/work-focus/doc/examples
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! An overdue area
+
+```
+title: $:/config/rimir/work-focus/areas/overdue
+tags: $:/tags/rimir/work-focus/area
+caption: Overdue
+wf.level: alert
+wf.date-field: due-date
+wf.info: date-relative field:parent
+wf.when-past: overdue <<n>>d
+wf.filter: [has[due-date]!has[completed-date]] :filter[get[due-date]wf-days[]compare:integer:lt[0]]
+```
+
+`wf.info` lists the parts shown under each item: `date-relative`, `date-relative:<field>` (another date field, worded by `wf.when-past.<field>` etc., e.g. `wf.when-future.due-date: due in <<n>>d`), `modified-ago` and `field:<name>`. Several areas can share a tab (`wf.tab`).
+
+!! Status area and a "Done" action
+
+An action that only exists where it makes sense. `<area>` is the area tiddler's title.
+
+```
+title: $:/config/rimir/work-focus/actions/done
+tags: $:/tags/rimir/work-focus/action
+caption: Done
+wf.group: status
+wf.icon: ✓
+wf.filter: [<area>!match[$:/config/rimir/work-focus/areas/plan]]
+wf.mark: ✓ done
+
+<$action-setfield $tiddler=<<item>> completed-date={{{ [wf-date[today]] }}}/>
+```
+
+!! Your own tiles
+
+Tile values come from `wf.tiles`, a filter. Values with `+` or `-` must be bracketed.
+
+```
+wf.tiles: [[today]] [[+1d]] [[+3d]] [[mon]]
+```
+
+!! Set a field with the shipped recipe
+
+```
+title: $:/config/rimir/work-focus/actions/waiting
+tags: $:/tags/rimir/work-focus/action
+caption: Waiting
+wf.group: status
+wf.recipe: set-field
+wf.field: status
+wf.value: waiting
+```
+
+!! Replace a shipped action
+
+Make a tiddler with the same title as the shipped one, e.g. `$:/plugins/rimir/work-focus/actions/day-strip`. Yours wins over the plugin's shadow. To hide one, set `wf.hidden: yes`; to replace it by another action, name it in that action's `wf.replaces`.
+
+</$fill>
+</$transclude>

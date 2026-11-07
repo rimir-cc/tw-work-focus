@@ -1,0 +1,43 @@
+created: 20261106120000000
+modified: 20261106120000000
+rdt.hub-category: tools
+rdt.hub-category-name: Tools
+rdt.hub-order: 5
+rdt.order: 3
+rdt.plugin-key: work-focus
+rdt.plugin-name: work focus
+rdt.plugin-subtitle: Dock with attention counts and a drag action ring
+rdt.section: Dev Workflow
+title: $:/plugins/rimir/work-focus/doc/dev-workflow
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! Restart rules
+
+|!Change |!Needs |
+|JS modules (`click-outside.js`, `ring-layer.js`, `date-operators.js`, `check.js`, `actions.js`, …) |Server restart, then reload |
+|Areas, groups, actions, recipes, info parts, config |Nothing for the definitions; run ↻ to see areas change |
+|`styles.tid`, `engine.tid`, `dock.tid`, `panel.tid` |Reload (they are normal tiddlers) |
+
+!! Tests
+
+```
+bin/tw test work-focus          # Jasmine: dates, check, actions, run, ring geometry
+bin/tw test:e2e work-focus      # Playwright: dock, panel, drag, ring, mutes
+```
+
+!! Adding a recipe, group or action
+
+# Create a tiddler with the right tag (see //Reference//). Use the same title as a shipped one to override it.
+# Reload. The next drag shows it. Nothing else to register.
+
+!! Debugging
+
+* The snapshot tiddler shows what the last check saw; `errors` names a broken area filter.
+* A drag that opens no ring means no action matched the item: check the action's `wf.filter` and that `wf.group` is set.
+* `bin/tw test work-focus` runs the check and the actions without a browser.
+
+</$fill>
+</$transclude>

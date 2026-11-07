@@ -1,0 +1,16 @@
+title: $:/plugins/rimir/work-focus/recipes/create
+tags: $:/tags/rimir/work-focus/recipe
+wf.name: create
+caption: Create
+wf.mark: ＋ <$text text={{{ [function[wf.new-title]] }}}/>
+wf.hint: creates <$text text={{{ [function[wf.new-title]] }}}/>
+
+<$let newTitle={{{ [function[wf.new-title]] }}}>
+<$action-setfield $tiddler=<<newTitle>>/>
+<$list filter="[<action>get[wf.fields]jsonindexes[]]" variable="fname">
+<$let ffilter={{{ [<action>get[wf.fields]jsonget<fname>] }}}>
+<$action-setfield $tiddler=<<newTitle>> $field=<<fname>> $value={{{ [subfilter<ffilter>first[]] }}}/>
+</$let>
+</$list>
+<$action-navigate $to=<<newTitle>>/>
+</$let>

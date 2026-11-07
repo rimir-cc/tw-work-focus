@@ -1,0 +1,47 @@
+title: $:/plugins/rimir/work-focus/settings
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+
+!! Work focus
+
+A dock with attention counts and a drag action ring. See the <<tag "readme">> and documentation tabs.
+
+<table class="rr-table">
+<tr><th>Setting</th><th>Value</th></tr>
+<tr><td>Show the dock (`$:/config/rimir/work-focus/enabled`)</td><td><$checkbox tiddler="$:/config/rimir/work-focus/enabled" field="text" checked="yes" unchecked="no" default="yes"> enabled</$checkbox></td></tr>
+<tr><td>Dock position (`.../position`): `top-left`, `top-right`, `bottom-left`, `bottom-right`</td><td><$select tiddler="$:/config/rimir/work-focus/position" default="top-left" class="rr-input"><option value="top-left">top-left</option><option value="top-right">top-right</option><option value="bottom-left">bottom-left</option><option value="bottom-right">bottom-right</option></$select></td></tr>
+<tr><td>Date format written by actions (`.../date-format`), used when a date field is empty. Matches kind's date fields by default (`20261106`)</td><td><$edit-text tiddler="$:/config/rimir/work-focus/date-format" tag="input" class="rr-input" style="width:100%"/></td></tr>
+<tr><td>Items shown per area before "+ N more" (`.../section-limit`)</td><td><$edit-text tiddler="$:/config/rimir/work-focus/section-limit" tag="input" class="rr-input" style="width:80px"/></td></tr>
+</table>
+
+The dock refreshes on reload, on ↻ and after an action. Changing a setting here shows at the next render; the area filters run at the next check.
+
+!! Areas
+
+Tiddlers tagged <<tag "$:/tags/rimir/work-focus/area">>, in tag order. The first area that matches an item claims it.
+
+<$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/work-focus/area]!is[draft]]" emptyMessage="''None. Create one, see the readme.''">
+<div><$link/> <em><$text text={{!!wf.level}}/></em> <code><$text text={{!!wf.filter}}/></code></div>
+</$list>
+
+!! Groups
+
+<$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/work-focus/group]!is[draft]sort[wf.order]]">
+<div><$link/>: <code><$text text={{!!wf.name}}/></code> <$text text={{!!caption}}/></div>
+</$list>
+
+!! Actions
+
+<$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/work-focus/action]!is[draft]]" emptyMessage="''None''">
+<div><$link/>: group <code><$text text={{!!wf.group}}/></code>, recipe <code><$text text={{!!wf.recipe}}/></code>, filter <code><$text text={{!!wf.filter}}/></code></div>
+</$list>
+
+!! Recipes and info parts
+
+<$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/work-focus/recipe]!is[draft]]">
+<div>Recipe <code><$text text={{!!wf.name}}/></code>: <$text text={{!!caption}}/></div>
+</$list>
+<$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/work-focus/info-part]!is[draft]]">
+<div>Info part <code><$text text={{!!wf.name}}/></code>: <$text text={{!!caption}}/></div>
+</$list>

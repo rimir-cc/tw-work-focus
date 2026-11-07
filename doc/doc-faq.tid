@@ -1,0 +1,66 @@
+created: 20261106120000000
+modified: 20261106120000000
+rdt.hub-category: tools
+rdt.hub-category-name: Tools
+rdt.hub-order: 5
+rdt.order: 5
+rdt.plugin-key: work-focus
+rdt.plugin-name: work focus
+rdt.plugin-subtitle: Dock with attention counts and a drag action ring
+rdt.section: FAQ
+title: $:/plugins/rimir/work-focus/doc/faq
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! Q: I changed a date and the count did not change.
+
+The counts are a snapshot. Click ↻ or reload. This is on purpose: nothing runs while you edit.
+
+!! Q: An item I expected is missing.
+
+It may sit in an earlier area (first match wins), be muted (see the footer of the panel), or have a blank or non-date value in the area's date field (`wf-days` drops those).
+
+!! Q: The dock shows `!`.
+
+The area filter is broken. Hover the `!` to see the error. The other areas still work.
+
+!! Q: I drag a row and no ring opens.
+
+No action matched this item. An action needs `wf.group`, and its `wf.filter` must return something for the item. Without a filter it always matches.
+
+!! Q: An action has no tile for a value like `+1d`.
+
+Values with `+` or `-` must be bracketed in `wf.tiles`: `[[today]] [[+1d]]`.
+
+!! Q: The action failed halfway; is it undone?
+
+No. Actions are not transactional. A failing action shows a notice and leaves no mark, but what it changed before the failure stays.
+
+!! Q: I defined a group or action twice.
+
+With the same `wf.name` (group or recipe) the first one found wins. To override a shipped one, use the same //title// as the shadow; your tiddler then replaces it.
+
+!! Q: Move does the wrong default.
+
+A group's default tile is the group's `wf.default` action. When it has several tiles, `wf.default-value` picks one. Move uses the day strip's `+1d`.
+
+!! Q: Does clicking an item close the panel?
+
+No, so you can triage several. A click outside closes it, and that click still reaches what is underneath.
+
+!! Q: I installed it and nothing changed.
+
+JS modules need a server restart (`click-outside.js`, `ring-layer.js`, `date-operators.js`, …).
+
+!! Q: The dock is hidden behind the sidebar button.
+
+At `top-right` it can sit under the Vanilla sidebar toggle. Use another corner or move the dock.
+
+!! Q: Tiles are cut off on a small window.
+
+With 5 or 6 groups, a viewport of about 440 px height or less can clamp tiles. Use a taller window.
+
+</$fill>
+</$transclude>

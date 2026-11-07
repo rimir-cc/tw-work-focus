@@ -1,0 +1,19 @@
+title: $:/plugins/rimir/work-focus/item
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+<!-- One item row. Vars: item, area. Click → navigate (wf-catch in layer); drag hooks on .wf-item (Task 6). -->
+
+<$let acted={{{ [function[wf.is-acted],<item>] }}} mark={{{ [function[wf.acted-mark],<item>] }}}>
+<%if [<acted>!is[blank]] %>
+<div class="wf-item wf-acted" data-wf-item=<<item>> data-wf-area=<<area>> title=<<item>>>
+<div class="wf-item-label"><$text text={{{ [function[wf.label],<item>] }}}/></div>
+<div class="wf-item-info"><span class="wf-mark"><$text text=<<mark>>/></span></div>
+</div>
+<%else%>
+<div class="wf-item" data-wf-item=<<item>> data-wf-area=<<area>> title=<<item>>>
+<div class="wf-item-label"><$text text={{{ [function[wf.label],<item>] }}}/></div>
+<div class="wf-item-info"><$transclude $variable="wf-info" item=<<item>> area=<<area>>/></div>
+</div>
+<%endif%>
+</$let>

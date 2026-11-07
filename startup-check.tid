@@ -1,0 +1,4 @@
+title: $:/plugins/rimir/work-focus/startup-check
+tags: $:/tags/StartupAction/Browser
+
+<%if [{$:/config/rimir/work-focus/enabled}trim[]match[yes]] %><$action-wf-check clear-acted="yes"/><%endif%>

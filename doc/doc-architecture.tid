@@ -1,0 +1,53 @@
+created: 20261106120000000
+modified: 20261106120000000
+rdt.hub-category: tools
+rdt.hub-category-name: Tools
+rdt.hub-order: 5
+rdt.order: 2
+rdt.plugin-key: work-focus
+rdt.plugin-name: work focus
+rdt.plugin-subtitle: Dock with attention counts and a drag action ring
+rdt.section: Architecture
+title: $:/plugins/rimir/work-focus/doc/architecture
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! Pieces
+
+|!Piece |!What it does |
+|`dates.js`, `date-operators.js` |Date expressions (`today`, `+1d`, `mon`, …), formatting, day differences. Filter operators `wf-date` and `wf-days` |
+|`check.js`, `action-wf-check.js` |Runs every area filter once (first match wins), applies mutes, writes the snapshot. `<$action-wf-check/>`. Also the shared filter helpers: `runFilter` (a throw or a `Filter Error: …` result is an error, never an item) and `globalWidget`/`importWidget` (filters run under `\import [subfilter{$:/core/config/GlobalImportFilter}]`, like the page template) |
+|`startup-check.tid` |Check on reload (`$:/tags/StartupAction/Browser`) |
+|`actions.js` |Which tiles and groups the ring shows for one item (filters see the global and the engine functions); builds and runs an action (`wf.requires` checked first) |
+|`ring-layer.js`, `ring-geometry.js` |The pointer gesture and the ring: plain DOM, laid out once per arc |
+|`click-outside.js` |Startup module: a click outside dock and panel closes the panel |
+|`engine.tid` |Shared `\function`s and `\procedure`s for dock, panel and item |
+|`layer.tid`, `dock.tid`, `panel.tid`, `item.tid` |Page template layer, closed strip, open panel, one row |
+|`styles.tid`, `config/*`, `info/*`, `recipes/*`, `groups/*`, `actions/*` |Styles, defaults, shipped parts |
+
+!! Data flow
+
+# A check runs the area filters in tag order. An item goes to the first area that matches. Muted items go to the muted list.
+# The result is one JSON tiddler, the //snapshot// (`$:/temp/rimir/work-focus/snapshot`). Dock and panel only read it.
+# A drag asks `actions.select` for the ring: every action whose filter returns something for this item, grouped by `wf.group`.
+# A release runs the action string with the item's variables, then writes an //acted mark// and checks again.
+
+!! State tiddlers
+
+|!Tiddler |!Content |
+|`$:/temp/rimir/work-focus/snapshot` |`{"checked", "areas": {area: [items]}, "muted": [items], "errors": {area: message}}` |
+|`$:/temp/rimir/work-focus/acted` |`{item: {"area", "mark"}}`; cleared by a reload or ↻ |
+|`$:/rimir/work-focus/mutes` |`{item: "YYYYMMDD"}`, saved with the wiki (not under `$:/state/`, which TW does not sync): the day the item shows again |
+|`$:/temp/rimir/work-focus/open` |`yes` while the panel is open |
+|`$:/temp/rimir/work-focus/more/<area>` |`yes` after "+ N more" was clicked |
+|`$:/temp/rimir/work-focus/show-muted` |`yes` while the muted list is shown |
+|`$:/state/rimir/work-focus/tab` |The active tab (per session; not saved) |
+
+!! Limits built in
+
+At most 6 groups on the first ring (the rest under "⋯ More") and 3 levels of nesting.
+
+</$fill>
+</$transclude>

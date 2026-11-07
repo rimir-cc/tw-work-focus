@@ -1,0 +1,3 @@
+title: $:/plugins/rimir/work-focus/notification
+
+<$text text=<<message>>/>

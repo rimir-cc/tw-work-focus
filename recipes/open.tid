@@ -1,0 +1,8 @@
+title: $:/plugins/rimir/work-focus/recipes/open
+tags: $:/tags/rimir/work-focus/recipe
+wf.name: open
+caption: Open
+wf.no-mark: yes
+wf.hint: opens <$text text={{{ [function[wf.label],<item>] }}}/>
+
+<$action-navigate $to=<<item>>/>

@@ -1,0 +1,17 @@
+title: $:/plugins/rimir/work-focus/info/field
+tags: $:/tags/rimir/work-focus/info-part
+type: text/vnd.tiddlywiki
+caption: Field value
+wf.name: field
+
+\whitespace trim
+<!-- field:<name> – value of field <<param>>; a value that is a tiddler (or a [[title]] list of them) shows by caption. -->
+<$let value={{{ [<item>get<param>] }}}>
+<%if [<value>has[title]] %>
+<$text text={{{ [function[wf.label],<value>] }}}/>
+<%elseif [<value>regexp[\[\[]] %>
+<$text text={{{ [<value>enlist-input[]] :map[function[wf.label],<currentTiddler>] +[join[, ]] }}}/>
+<%elseif [<value>!is[blank]] %>
+<$text text=<<value>>/>
+<%endif%>
+</$let>

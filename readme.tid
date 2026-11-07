@@ -1,0 +1,28 @@
+title: $:/plugins/rimir/work-focus/readme
+
+! Work focus
+
+A small dock in a corner of the page shows how many things need you: overdue, due today, newly started. Open it to see the items. Drag one to the side and a ring of action tiles appears; release on a tile to act on the item without opening it.
+
+!! Features
+
+* ''Dock'' — a pill strip with one count per area (alert, warning, hint). It refreshes only on reload, on ↻ and after an action, never while you type.
+* ''Panel'' — click the dock to list the items by area, with tabs, "+ N more", and info lines such as "overdue 3d" or "changed 2d ago".
+* ''Areas are your filters'' — an area is a config tiddler with a filter; first match wins, so an item shows in one area only.
+* ''Drag ring'' — drag a row to the right: a half ring of groups (Move, Mute, Status, Open, …) opens; hover a group to fan out its tiles (Today, Tmrw, Mon, …); release to run.
+* ''Acted marks'' — an item you acted on stays in the panel with a mark ("→ Mon 9") until the next check.
+* ''Mutes'' — hide an item until a day; it shows again then. Unmute from the panel footer.
+* ''Recipes'' — an action is a config tiddler: pick a recipe (move a date, set a field, tag, create, open, mute) or write your own action string.
+* ''Generic'' — no hard dependency on any other plugin; the example areas live in your wiki, not in the plugin.
+
+!! Prerequisites
+
+* TiddlyWiki 5.4.0 or later (JS modules: server restart or reload needed after install)
+* Optional: `rimir/theme` (`rr-` styles in settings), `rimir/doc-template` (branded docs)
+
+!! Quick Start
+
+# Install the plugin and restart the server: its JS modules (check, ring, date operators) load only at startup. A single-file wiki: save and reload.
+# Create an area tiddler, tagged `$:/tags/rimir/work-focus/area`, with fields `caption: Overdue`, `wf.level: alert`, `wf.date-field: due-date`, `wf.info: date-relative` and the filter `wf.filter: [has[due-date]!has[completed-date]] :filter[get[due-date]wf-days[]compare:integer:lt[0]]`.
+# Reload the page. The dock shows a red pill with the number of overdue items (no pill when nothing is overdue). Click it to see the items.
+# Press on a row, drag to the right, hover //Move//, release on //Tmrw//.

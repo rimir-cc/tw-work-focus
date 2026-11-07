@@ -1,0 +1,10 @@
+title: $:/plugins/rimir/work-focus/recipes/mute
+tags: $:/tags/rimir/work-focus/recipe
+wf.name: mute
+caption: Mute
+wf.mark: 🔕 until <$text text={{{ [function[wf.until]] :map[function[wf.short-day],<currentTiddler>] }}}/>
+wf.hint: hidden until <$text text={{{ [function[wf.until]] :map[function[wf.resolve],<currentTiddler>format:date<wf-day8-format>] }}}/>
+
+<$let until={{{ [function[wf.until]] }}}>
+<$action-setfield $tiddler="$:/rimir/work-focus/mutes" $index=<<item>> $value={{{ [wf-date<until>,[20000101]] }}}/>
+</$let>

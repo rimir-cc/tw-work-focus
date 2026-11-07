@@ -1,0 +1,8 @@
+title: $:/plugins/rimir/work-focus/groups/mute
+tags: $:/tags/rimir/work-focus/group
+wf.name: mute
+caption: Mute
+wf.icon: 🔕
+wf.order: 20
+wf.default: $:/plugins/rimir/work-focus/actions/mute
+

@@ -1,0 +1,14 @@
+title: $:/plugins/rimir/work-focus/recipes/move-date
+tags: $:/tags/rimir/work-focus/recipe
+wf.name: move-date
+wf.requires: [function[wf.move-field]]
+wf.requires-message: no field to set
+caption: Move a date
+wf.mark: → <$text text={{{ [function[wf.move-to]] :map[function[wf.short-day],<currentTiddler>] }}}/>
+wf.hint: <$text text={{{ [function[wf.move-field]] }}}/> becomes <$text text={{{ [function[wf.move-to]] :map[function[wf.resolve],<currentTiddler>format:date<wf-day8-format>] }}}/>
+
+<$let field={{{ [function[wf.move-field]] }}} to={{{ [function[wf.move-to]] }}} sample={{{ [<item>get<field>] }}}>
+<%if [<field>!is[blank]] %>
+<$action-setfield $tiddler=<<item>> $field=<<field>> $value={{{ [wf-date<to>,<sample>] }}}/>
+<%endif%>
+</$let>

@@ -1,0 +1,16 @@
+{
+    "title": "$:/plugins/rimir/work-focus",
+    "description": "Dock with attention counts and a drag action ring: see what needs you, act on it without opening it",
+    "name": "work focus",
+    "author": "rimir",
+    "version": "0.1.0",
+    "core-version": ">=5.4.0",
+    "source": "https://github.com/rimir-cc/tw-work-focus",
+    "plugin-type": "plugin",
+    "list": "readme documentation settings changelog license",
+    "dependents": "",
+    "soft-dependents": [
+        "$:/plugins/rimir/doc-template",
+        "$:/plugins/rimir/theme"
+    ]
+}

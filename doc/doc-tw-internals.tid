@@ -1,0 +1,34 @@
+created: 20261106120000000
+modified: 20261106120000000
+rdt.hub-category: tools
+rdt.hub-category-name: Tools
+rdt.hub-order: 5
+rdt.order: 7
+rdt.plugin-key: work-focus
+rdt.plugin-name: work focus
+rdt.plugin-subtitle: Dock with attention counts and a drag action ring
+rdt.section: TW Internals
+title: $:/plugins/rimir/work-focus/doc/tw-internals
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! Why it is built this way
+
+* ''Snapshot, not live filters.'' A live filter in the panel would re-run on every keystroke. Areas run in JS (`check.js`) at set moments and the wikitext reads one JSON tiddler.
+* ''First match in JS.'' "An item is in the first area that matches" is a set operation over many filters; it is simple in a loop and awkward in wikitext.
+* ''The ring is plain DOM.'' It is created and removed around one pointer gesture. TW's widget refresh would re-render under the pointer. Only the tile data is computed from wiki tiddlers.
+* ''Action strings run through `invokeActionString`'' in a small widget tree carrying the variables, with `\import` of the engine so hints and marks can use `wf.*` functions.
+
+!! Things worth knowing
+
+* `wf-days` and `wf-date` work on local calendar days. TW dates (14 or 17 digits) are UTC instants and are converted to the local day.
+* Action attributes are computed before earlier actions in the same string run; do not rely on a field set one line above in the same attribute.
+* Config tiddler text ends with a newline; the plugin trims it.
+* Area and action `wf.filter` fields are plain filter text, so write them without `{{{ }}}`.
+* `$action-deletetiddler` skips hooks; a custom "delete" action must clean up related tiddlers itself.
+* The click that follows a drag is eaten in the capture phase, so neither the panel nor what is below reacts to it.
+
+</$fill>
+</$transclude>
