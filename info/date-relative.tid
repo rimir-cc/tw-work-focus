@@ -3,6 +3,7 @@ tags: $:/tags/rimir/work-focus/info-part
 type: text/vnd.tiddlywiki
 caption: Date relative to today
 wf.name: date-relative
+wf.param: optional
 
 \whitespace trim
 <!-- date-relative[:<field>] – the area's date field (or field <<param>>) relative to today. Wording from the area's wf.when-past / wf.when-today / wf.when-future (<<n>> = days); with a param from wf.when-past.<field> etc. -->

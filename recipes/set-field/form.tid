@@ -1,0 +1,9 @@
+title: $:/plugins/rimir/work-focus/recipes/set-field/form
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+<!-- Recipe form (action-form.tid): currentTiddler = the action buffer; vars item, area, date-field. -->
+<div class="wf-two">
+<label class="wf-fld"><span class="wf-label">Field</span><$edit-text field="wf.field" tag="input" class="wf-in wf-f-field wf-list-wf-form-fields" placeholder="e.g. status"/></label>
+<label class="wf-fld"><span class="wf-label">Value</span><$edit-text field="wf.value" tag="input" class="wf-in wf-f-value" placeholder="e.g. done (blank clears)"/></label>
+</div>

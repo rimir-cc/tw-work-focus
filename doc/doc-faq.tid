@@ -16,7 +16,7 @@ type: text/vnd.tiddlywiki
 
 !! Q: I changed a date and the count did not change.
 
-The counts are a snapshot. Click ↻ or reload. This is on purpose: nothing runs while you edit.
+The counts are a snapshot. It refreshes on reload, on ↻, after an action and when an edit is saved: closing an area card, leaving edit mode, Save/Duplicate/Delete in a form, "+ area", "+ tab", rename, move, delete. Nothing runs while you type: edit a tiddler (a date, a status) and the counts stay until you click ↻.
 
 !! Q: An item I expected is missing.
 
@@ -44,7 +44,7 @@ With the same `wf.name` (group or recipe) the first one found wins. To override 
 
 !! Q: Move does the wrong default.
 
-A group's default tile is the group's `wf.default` action. When it has several tiles, `wf.default-value` picks one. Move uses the day strip's `+1d`.
+A group's default tile is the group's `wf.default` action. When it has several tiles, `wf.default-value` picks one. Move uses the day strip's `+1d` (Tmrw). The day strip rolls forward from today (Today, Tmrw, then the next three weekdays, then +1 wk), so on a Sunday it reads Today, Tmrw (Mon), Tue, Wed, Thu, +1 wk.
 
 !! Q: Does clicking an item close the panel?
 
@@ -52,7 +52,7 @@ No, so you can triage several. A click outside closes it, and that click still r
 
 !! Q: I installed it and nothing changed.
 
-JS modules need a server restart (`click-outside.js`, `ring-layer.js`, `date-operators.js`, …).
+JS modules need a server restart (`click-outside.js`, `ring-layer.js`, `date-operators.js`, `live-filter.js`, `live-widget.js`, `datalist.js`, …).
 
 !! Q: The dock is hidden behind the sidebar button.
 
@@ -61,6 +61,42 @@ At `top-right` it can sit under the Vanilla sidebar toggle. Use another corner o
 !! Q: Tiles are cut off on a small window.
 
 With 5 or 6 groups, a viewport of about 440 px height or less can clamp tiles. Use a taller window.
+
+!! Q: The card says 12 but the dock chip says 9.
+
+The card count is the raw filter count: no first-match placement (an earlier area may claim an item), drafts counted. The dock shows the snapshot after the checks.
+
+!! Q: I dropped a card outside the panel and TiddlyWiki opened its import dialog.
+
+Cards are draggable tiddlers; dropping one on the page is an import. Cancel the dialog. Drop cards on a tab, on another card or on "+ area".
+
+!! Q: Where is the Save button of an area?
+
+There is none. A card edits the area tiddler directly. Actions and groups use a form with Save, which edits a copy.
+
+!! Q: I deleted a shipped action and it is still listed.
+
+Delete on a shipped action or group hides it (`wf.hidden: yes`). Open it from the settings tab or the ring (hidden tiles are dimmed) and press "↺ Shipped" to restore it.
+
+!! Q: I switched the recipe and old fields remain.
+
+Switching keeps the previous recipe's `wf.*` fields in the tiddler, so switching back loses nothing. Remove them in the tiddler editor if you want it clean.
+
+!! Q: How do I clear the default of a group?
+
+"Default of group" in the action form can only set one. Clear it in the group form.
+
+!! Q: Replaces shows one title but `wf.replaces` has several.
+
+The form edits a single title. Edit the field in the tiddler editor for a list.
+
+!! Q: Esc does not close the panel.
+
+Esc steps back in this order: menu, form, pinned ring, open card, edit mode, panel. Press it again.
+
+!! Q: The ring stays open after I release.
+
+In edit mode the ring is pinned. Esc, a click outside, or leaving edit mode closes it.
 
 </$fill>
 </$transclude>

@@ -21,6 +21,10 @@ type: text/vnd.tiddlywiki
 * ''The ring is plain DOM.'' It is created and removed around one pointer gesture. TW's widget refresh would re-render under the pointer. Only the tile data is computed from wiki tiddlers.
 * ''Action strings run through `invokeActionString`'' in a small widget tree carrying the variables, with `\import` of the engine so hints and marks can use `wf.*` functions.
 
+* ''Live count, one exception.'' `<$wf-live>` is a widget that ignores wiki changes: it evaluates at render and once per 300 ms pause while the filter text changes. A plain `<$list>` would re-run the filter on every keystroke.
+* ''Forms edit a buffer.'' Saving uses `$action-createtiddler $basetitle=… $template=… $overwrite="yes"`, which replaces the whole tiddler; closing the form deletes only the buffer.
+* ''Datalist by focus.'' `<$edit-text>` cannot set an input's `list` attribute, so `datalist.js` adds it on `focusin`.
+
 !! Things worth knowing
 
 * `wf-days` and `wf-date` work on local calendar days. TW dates (14 or 17 digits) are UTC instants and are converted to the local day.

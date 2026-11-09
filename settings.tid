@@ -2,10 +2,22 @@ title: $:/plugins/rimir/work-focus/settings
 type: text/vnd.tiddlywiki
 
 \whitespace trim
+\import $:/plugins/rimir/work-focus/engine $:/plugins/rimir/work-focus/edit-engine
+
+\procedure wf-settings-area-edit()
+<$transclude $variable="wf-area-open" area=<<area>>/>
+\end
+
+\procedure wf-settings-area-new()
+<$transclude $variable="wf-area-new" tab={{{ [function[wf.active-tab]] }}}/>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/open" text="yes"/>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/edit" text="yes"/>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/edit-view" text="areas"/>
+\end
 
 !! Work focus
 
-A dock with attention counts and a drag action ring. See the <<tag "readme">> and documentation tabs.
+A dock with attention counts and a drag action ring. See the <<tag "readme">> and documentation tabs. Areas, groups and actions are edited in the dock: open the panel and press ✎ (edit mode), or drag a row in edit mode and press ✎ on a tile. The buttons below open the same editors.
 
 <table class="rr-table">
 <tr><th>Setting</th><th>Value</th></tr>
@@ -15,33 +27,45 @@ A dock with attention counts and a drag action ring. See the <<tag "readme">> an
 <tr><td>Items shown per area before "+ N more" (`.../section-limit`)</td><td><$edit-text tiddler="$:/config/rimir/work-focus/section-limit" tag="input" class="rr-input" style="width:80px"/></td></tr>
 </table>
 
-The dock refreshes on reload, on ↻ and after an action. Changing a setting here shows at the next render; the area filters run at the next check.
+The dock refreshes on reload, on ↻, after an action and when an edit is saved (closing an area card, leaving edit mode, the Save of a form). Changing a setting here shows at the next render; the area filters run at the next check.
 
 !! Areas
 
-Tiddlers tagged <<tag "$:/tags/rimir/work-focus/area">>, in tag order. The first area that matches an item claims it.
+Tiddlers tagged <<tag "$:/tags/rimir/work-focus/area">>, in tag order. The first area that matches an item claims it. A button opens the panel in edit mode on the area's tab with its card open (ring and panel: ✎ in the panel header).
 
-<$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/work-focus/area]!is[draft]]" emptyMessage="''None. Create one, see the readme.''">
-<div><$link/> <em><$text text={{!!wf.level}}/></em> <code><$text text={{!!wf.filter}}/></code></div>
+<$list filter="[function[wf.areas]]" variable="a" emptyMessage="''None. Create one with + area.''">
+<div class="wf-set-row"><$let area=<<a>>><$button class="tc-btn-invisible" actions=<<wf-settings-area-edit>> tooltip="Edit this area in the panel">✎&#32;<$text text={{{ [function[wf.caption],<a>] }}}/></$button></$let>&#32;<em><$text text={{{ [function[wf.level],<a>] }}}/></em>&#32;<code><$text text={{{ [<a>get[wf.filter]] }}}/></code></div>
 </$list>
+
+<$button actions=<<wf-settings-area-new>>>+ area</$button>
 
 !! Groups
 
-<$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/work-focus/group]!is[draft]sort[wf.order]]">
-<div><$link/>: <code><$text text={{!!wf.name}}/></code> <$text text={{!!caption}}/></div>
+Ring groups, tagged <<tag "$:/tags/rimir/work-focus/group">>. A button opens the group form beside the dock. A group that came with the plugin can be overridden or hidden; "↺ Shipped" in the form restores it.
+
+<$list filter="[function[wf.groups-all]]" variable="g">
+<div class="wf-set-row"><$let kind="group" target=<<g>> item="" area="" preset="" side="right"><$button class="tc-btn-invisible" actions=<<wf-form-open>> tooltip="Edit this group">✎&#32;<$text text={{{ [function[wf.group-cap],<g>] }}}/></$button></$let>&#32;<code><$text text={{{ [<g>get[wf.name]] }}}/></code><$list filter="[<g>get[wf.hidden]match[yes]]" variable="x">&#32;<em>hidden</em></$list></div>
 </$list>
+
+<$let kind="group" target="" item="" area="" preset="" side="right"><$button actions=<<wf-form-open>>>+ group</$button></$let>
 
 !! Actions
 
-<$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/work-focus/action]!is[draft]]" emptyMessage="''None''">
-<div><$link/>: group <code><$text text={{!!wf.group}}/></code>, recipe <code><$text text={{!!wf.recipe}}/></code>, filter <code><$text text={{!!wf.filter}}/></code></div>
+Ring tiles, tagged <<tag "$:/tags/rimir/work-focus/action">>. A button opens the action form.
+
+<$list filter="[function[wf.actions-all]sort[caption]]" variable="a" emptyMessage="''None''">
+<div class="wf-set-row"><$let kind="action" target=<<a>> item="" area="" preset="" side="right"><$button class="tc-btn-invisible" actions=<<wf-form-open>> tooltip="Edit this action">✎&#32;<$text text={{{ [<a>get[caption]] ~[<a>] }}}/></$button></$let>&#32;group&#32;<code><$text text={{{ [<a>get[wf.group]] }}}/></code>,&#32;recipe&#32;<code><$text text={{{ [<a>get[wf.recipe]] }}}/></code><$list filter="[<a>get[wf.hidden]match[yes]]" variable="x">&#32;<em>hidden</em></$list></div>
 </$list>
+
+<$let kind="action" target="" item="" area="" preset="" side="right"><$button actions=<<wf-form-open>>>+ action</$button></$let>
 
 !! Recipes and info parts
 
-<$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/work-focus/recipe]!is[draft]]">
-<div>Recipe <code><$text text={{!!wf.name}}/></code>: <$text text={{!!caption}}/></div>
+Read-only. A recipe with a form (`<recipe>/form`) shows its settings in the action form; a bridge plugin adds one by shipping that tiddler.
+
+<$list filter="[function[wf.recipes-all]]" variable="r">
+<div class="wf-set-row">Recipe&#32;<code><$text text={{{ [<r>get[wf.name]] }}}/></code>:&#32;<$text text={{{ [<r>get[caption]] }}}/>&#32;<em><$text text={{{ [function[wf.recipe-form],<r>then[has a form]else[no form]] }}}/></em></div>
 </$list>
-<$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/work-focus/info-part]!is[draft]]">
-<div>Info part <code><$text text={{!!wf.name}}/></code>: <$text text={{!!caption}}/></div>
+<$list filter="[function[wf.tagged],[$:/tags/rimir/work-focus/info-part]]" variable="p">
+<div class="wf-set-row">Info part&#32;<code><$text text={{{ [<p>get[wf.name]] }}}/></code>:&#32;<$text text={{{ [<p>get[caption]] }}}/></div>
 </$list>

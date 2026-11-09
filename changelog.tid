@@ -4,4 +4,5 @@ type: text/vnd.tiddlywiki
 ! Changelog
 
 |!Version |!Date |!Changes |
-|v0.1.0 |2026-11-06 |First version: dock, panel, check, mutes, action ring, recipes |
+|0.1.1 |2026-11-07 |Edit mode: area cards with live counts, action and group forms, recipe forms, ring edit mode, settings tab; edits run the check on save; tiles editor in the action form (chips, own labels via `wf.tile-labels`), form next to the pinned ring; the Move day strip rolls forward from today (Today, Tmrw, +2d..+4d, +1 wk)|
+|0.1.0 |2026-11-06 |First version: dock, panel, check, mutes, action ring, recipes |

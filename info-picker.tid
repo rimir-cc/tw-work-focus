@@ -1,0 +1,58 @@
+title: $:/plugins/rimir/work-focus/info-picker
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+\procedure wf-info-state() $:/temp/rimir/work-focus/info-add
+\procedure wf-info-add()
+<$let part={{{ [<wf-info-state>get[part]] }}} param={{{ [<wf-info-state>get[param]trim[]] }}}>
+<$let token={{{ [<param>!is[blank]addprefix[:]addprefix<part>] ~[<part>] }}}>
+<$list filter="[<part>!is[blank]]" variable="x">
+<$action-listops $tiddler=<<area>> $field="wf.info" $subfilter="[<token>]"/>
+<$action-deletetiddler $tiddler=<<wf-info-state>>/>
+</$list>
+</$let>
+</$let>
+\end
+\procedure wf-info-left()
+<$action-listops $tiddler=<<area>> $field="wf.info" $subfilter="+[move:-1<token>]"/>
+\end
+\procedure wf-info-right()
+<$action-listops $tiddler=<<area>> $field="wf.info" $subfilter="+[move:1<token>]"/>
+\end
+\procedure wf-info-remove()
+<$action-listops $tiddler=<<area>> $field="wf.info" $subfilter="-[<token>]"/>
+\end
+<!-- Ordered editor for the area's wf.info tokens (<name> or <name>:<param>). Var: area. Parts come from tiddlers
+     tagged $:/tags/rimir/work-focus/info-part (wf.name, caption); wf.param (required|optional) adds a field-name
+     input. The add row edits $:/temp/rimir/work-focus/info-add (part, param). -->
+
+<div class="wf-info-picker">
+<$let last={{{ [<area>get[wf.info]enlist-input[]last[]] }}}>
+<div class="wf-info-parts">
+<$list filter="[<area>get[wf.info]enlist-input[]]" variable="token" counter="i" emptyMessage="""<span class="wf-help">No info line yet</span>""">
+<$let name={{{ [<token>split[:]first[]] }}} param={{{ [<token>split[:]butfirst[]join[:]] }}}>
+<span class="wf-info-part" data-token=<<token>> title={{{ [function[wf.info-part],<name>get[caption]] ~[<token>] }}}>
+<$button class="wf-info-left" actions=<<wf-info-left>> disabled={{{ [<i>match[1]then[yes]] }}} tooltip="Earlier" aria-label="Move earlier">‹</$button>
+<span class="wf-info-label"><$text text={{{ [<param>!is[blank]] ~[<name>] }}}/></span>
+<$button class="wf-info-right" actions=<<wf-info-right>> disabled={{{ [<token>match<last>then[yes]] }}} tooltip="Later" aria-label="Move later">›</$button>
+<$button class="wf-info-remove" actions=<<wf-info-remove>> tooltip="Remove" aria-label="Remove">✕</$button>
+</span>
+</$let>
+</$list>
+</div>
+</$let>
+<div class="wf-info-add-row">
+<$select tiddler=<<wf-info-state>> field="part" default="" class="wf-in wf-info-select">
+<option value="">Add part…</option>
+<$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/work-focus/info-part]]">
+<option value={{!!wf.name}}><$text text={{{ [{!!caption}!is[blank]] ~[{!!wf.name}] }}}/></option>
+</$list>
+</$select>
+<$let paramkind={{{ [<wf-info-state>get[part]] :map[function[wf.info-part],<currentTiddler>get[wf.param]] }}}>
+<%if [<paramkind>!is[blank]] %>
+<$edit-text tiddler=<<wf-info-state>> field="param" tag="input" class="wf-in wf-info-param wf-fields-input" placeholder={{{ [<paramkind>match[required]then[field name]else[field (optional)]] }}}/>
+<%endif%>
+<$button class="wf-btn wf-info-add" actions=<<wf-info-add>> disabled={{{ [<paramkind>match[required]] :filter[<wf-info-state>!has[param]] [<wf-info-state>!has[part]] +[then[yes]] }}}>Add</$button>
+</$let>
+</div>
+</div>

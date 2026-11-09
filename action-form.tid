@@ -1,0 +1,250 @@
+title: $:/plugins/rimir/work-focus/action-form
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+\procedure wf-new-group() wf-form:new-group
+\procedure wf-always() [[yes]]
+\procedure wf-f-group-picked()
+<$list filter="[<currentTiddler>get[wf.group]match<wf-new-group>]" variable="x">
+<!-- the group form takes the action form's place -->
+<$let kind="group" target="" preset="" value="" left={{{ [function[wf.form-field],[left]] }}} top={{{ [function[wf.form-field],[top]] }}}>
+<<wf-form-open>>
+</$let>
+<<wf-focus-form>>
+</$list>
+\end
+\procedure wf-f-tile-add()
+<$transclude $variable="wf-tile-add" v={{{ [<wf-form-tiles>get[add]] }}}/>
+<$action-setfield $tiddler=<<wf-form-tiles>> add=""/>
+\end
+\procedure wf-f-tile-pick()
+<$transclude $variable="wf-tile-add" v={{{ [<wf-form-tiles>get[pick]] }}}/>
+<$action-setfield $tiddler=<<wf-form-tiles>> pick=""/>
+\end
+\procedure wf-f-label-edit()
+<$action-setfield $tiddler=<<wf-form-tile-label>> value=<<v>> text={{{ [function[wf.tile-label-of],<v>] }}} orig={{{ [function[wf.tile-label-of],<v>] }}}/>
+\end
+\procedure wf-f-label-input()
+<$transclude $variable="wf-tile-relabel" v=<<v>> label=<<actionValue>>/>
+\end
+\procedure wf-f-label-done()
+<$action-deletetiddler $tiddler=<<wf-form-tile-label>>/>
+\end
+\procedure wf-f-label-cancel()
+<$transclude $variable="wf-tile-relabel" v=<<v>> label={{{ [<wf-form-tile-label>get[orig]] }}}/>
+<$action-deletetiddler $tiddler=<<wf-form-tile-label>>/>
+\end
+\procedure wf-f-recipe-pick()
+<$action-setfield $tiddler=<<currentTiddler>> wf.recipe=<<name>>/>
+\end
+<!-- The action form (form.tid, currentTiddler = buffer). Inputs never sit inside a $let or <$wf-live> that depends
+     on what they edit, so typing keeps the focus. Only <$wf-live> runs the action's filter and tiles filter
+     (debounced); the group tree, recipes and actions lists are small tagged sets. -->
+
+<div class="wf-two">
+<label class="wf-fld"><span class="wf-label">Label</span><$edit-text field="caption" tag="input" class="wf-in wf-f-caption" focus={{{ [function[wf.form-field],[value]then[no]else[yes]] }}} placeholder="e.g. Mon"/></label>
+<label class="wf-fld"><span class="wf-label">Icon</span><$edit-text field="wf.icon" tag="input" class="wf-in wf-f-icon wf-list-wf-icons" placeholder="the group's"/></label>
+</div>
+
+<!-- Tiles: while wf.tiles is a plain value list (edit-engine wf.tiles-mode: list, or the distinct-days wrapper) its
+     values are chips, labelled as in the ring; a real filter is edited as text under Advanced. The inputs edit temp
+     tiddlers (form/tiles, form/tile-label), never a field a $let above them reads, so they keep the focus. -->
+<$let tmode={{{ [function[wf.buffer-tiles-mode]match[blank]] :filter[<wf-form-tiles>get[open]match[yes]] :then[[list]] ~[function[wf.buffer-tiles-mode]] }}}>
+<div class={{{ wf-fld wf-tiles [[wf-tiles-]addsuffix<tmode>] +[join[ ]] }}}><span class="wf-label">Tiles</span>
+<%if [<tmode>match[filter]] %>
+<div class="wf-help">Tiles come from a filter:</div>
+<code class="wf-tiles-filter"><$text text={{{ [function[wf.buffer-field],[wf.tiles]trim[]] }}}/></code>
+<div class="wf-help">Change it under "Advanced: tiles filter and templates" below.</div>
+<%elseif [<tmode>match[blank]] %>
+<div class="wf-tiles-one">
+<span class="wf-help">One tile (label = the action's label)</span>
+<$button class="wf-btn wf-tiles-start" actions=<<wf-tiles-start>> tooltip="One action, several tiles: e.g. one per day">Add the first tile</$button>
+</div>
+<%else%>
+<$let src={{{ [function[wf.tiles-src],{$:/temp/rimir/work-focus/form/buffer!!wf.tiles}] }}} count={{{ [function[wf.buffer-tiles]count[]] }}}>
+<!-- the distinct-days wrapper drops a value whose day an earlier one already has (shown dimmed) -->
+<$let shown={{{ [<tmode>match[days]] :then[function[wf.distinct-days],<src>format:titlelist[]join[ ]] ~[<src>] }}} last={{{ [function[wf.buffer-tiles]last[]] }}} first={{{ [function[wf.buffer-tiles]first[]] }}}>
+<%if [<count>match[0]] %>
+<div class="wf-help wf-tiles-one-text">One tile (label = the action's label)</div>
+<%else%>
+<div class="wf-help wf-tiles-count"><$text text={{{ [<count>match[1]then[This action makes 1 tile]] ~[<count>addprefix[This action makes ]addsuffix[ tiles]] }}}/></div>
+<div class="wf-help wf-tiles-tip">✎ click a name to rename it</div>
+<%endif%>
+<div class="wf-tchips">
+<$list filter="[function[wf.buffer-tiles]]" variable="v">
+<$let dup={{{ [<tmode>match[days]then<v>] -[enlist<shown>] }}}>
+<div class={{{ wf-tchip [<v>match<tilevalue>then[wf-on]] [<dup>!is[blank]then[wf-dup]] +[join[ ]] }}} data-wf-value=<<v>> title={{{ [<dup>!is[blank]then[Same day as an earlier tile today: not shown]] }}}>
+<div class="wf-tchip-head">
+<%if [<wf-form-tile-label>get[value]match<v>] %>
+<$wikify name="tpl" text="""<$transclude $variable="wf-tile-text" v=<<v>> field="wf.tile-label"/>""" output="text">
+<$keyboard key="enter" actions=<<wf-f-label-done>> tag="span" class="wf-tchip-edit">
+<$keyboard key="escape" actions=<<wf-f-label-cancel>> tag="span">
+<$edit-text tiddler=<<wf-form-tile-label>> tag="input" class="wf-in wf-tchip-in" focus="yes" placeholder={{{ [<tpl>!is[blank]] ~[<v>] }}} inputActions=<<wf-f-label-input>>/>
+</$keyboard>
+</$keyboard>
+</$wikify>
+<%else%>
+<$button class="wf-tchip-label" actions=<<wf-f-label-edit>> tooltip="Rename this tile"><span class="wf-tchip-name"><$transclude $variable="wf-tile-label" v=<<v>>/></span><span class="wf-tchip-pen" aria-hidden="true">✎</span></$button>
+<%endif%>
+<$button class="wf-tchip-x" actions="""<$transclude $variable="wf-tile-remove" v=<<v>>/>""" tooltip="Remove this tile" aria-label="Remove">×</$button>
+</div>
+<%if [<wf-form-buffer>get[wf.tile-sub]!is[blank]] %>
+<div class="wf-tchip-sub"><$transclude $variable="wf-tile-text" v=<<v>> field="wf.tile-sub"/></div>
+<%endif%>
+<div class="wf-tchip-foot">
+<$button class="wf-tchip-move wf-tchip-left" actions="""<$transclude $variable="wf-tile-move" v=<<v>> by="-1"/>""" disabled={{{ [<v>match<first>then[yes]] }}} tooltip="Move left" aria-label="Move left">‹</$button>
+<code class="wf-tchip-value"><$text text=<<v>>/></code>
+<$button class="wf-tchip-move wf-tchip-right" actions="""<$transclude $variable="wf-tile-move" v=<<v>> by="1"/>""" disabled={{{ [<v>match<last>then[yes]] }}} tooltip="Move right" aria-label="Move right">›</$button>
+</div>
+</div>
+</$let>
+</$list>
+</div>
+<%if [<wf-form-tile-label>is[tiddler]] %>
+<div class="wf-help">Enter: done · Esc: undo · blank: back to the label the template gives</div>
+<%endif%>
+</$let>
+</$let>
+<!-- outside the $lets above: adding a value doesn't re-render the add row (the free input keeps the focus) -->
+<div class="wf-tiles-add">
+<$select tiddler=<<wf-form-tiles>> field="pick" default="" class="wf-in wf-tiles-pick" actions=<<wf-f-tile-pick>>>
+<option value="">+ add…</option>
+<$list filter="[enlist<wf-tile-presets>] -[function[wf.buffer-tiles]]" variable="d">
+<option value=<<d>>><$text text={{{ [function[wf.resolve],<d>format:date<wf-day8-format>addprefix[ · ]addprefix<d>] }}}/></option>
+</$list>
+</$select>
+<$keyboard key="enter" actions=<<wf-f-tile-add>> tag="span" class="wf-tiles-free">
+<$edit-text tiddler=<<wf-form-tiles>> field="add" tag="input" class="wf-in wf-tiles-add-in" placeholder="e.g. +10d, fri"/>
+</$keyboard>
+<$button class="wf-btn wf-tiles-add-btn" actions=<<wf-f-tile-add>> tooltip="Add this value (Enter)">Add</$button>
+</div>
+<%endif%>
+</div>
+</$let>
+
+<label class="wf-fld"><span class="wf-label">Group</span>
+<$select field="wf.group" default="" class="wf-in wf-f-group" actions=<<wf-f-group-picked>>>
+<option value="">no group (never shown)</option>
+<$transclude $variable="wf-group-options" depth="3" skip=""/>
+<$list filter="[<currentTiddler>get[wf.group]trim[]] -[function[wf.groups-all]get[wf.name]] -[<wf-new-group>]" variable="g">
+<option value=<<g>>><$text text={{{ [<g>addsuffix[ (no group tiddler)]] }}}/></option>
+</$list>
+<option value=<<wf-new-group>>>+ new group…</option>
+</$select>
+</label>
+<span class="wf-help">"+ new group…" leaves this form without saving it.</span>
+
+<label class="wf-fld"><span class="wf-label">Shown for (filter)</span>
+<$edit-text field="wf.filter" tag="textarea" class="wf-in wf-code wf-f-filter" autoHeight="yes" minHeight="34px" rows="1" placeholder="blank = every item, e.g. [&lt;date-field&gt;!is[blank]]"/>
+</label>
+<%if [<item>!is[blank]] %>
+<!-- same context as actions.select: currentTiddler = the item, action = the action (here the buffer), value empty.
+     The filter text is read from the buffer by title (currentTiddler is the item here) and stays an attribute expression. -->
+<$tiddler tiddler=<<item>>><$let action="$:/temp/rimir/work-focus/form/buffer" value="">
+<$wf-live filter={{{ [[$:/temp/rimir/work-focus/form/buffer]get[wf.filter]trim[]!is[blank]] ~[<wf-always>] }}} source=<<item>> limit="1">
+<$let where={{{ [<area>!is[blank]get[caption]] ~[<area>] }}}>
+<$let subject={{{ [function[wf.label],<item>addprefix["]addsuffix["]] [<where>!is[blank]addprefix[in ]] +[join[ ]] }}} pending={{{ [<live-pending>match[yes]then[wf-pending]] }}}>
+<%if [<live-error>!is[blank]] %>
+<div class="wf-live-line wf-live-bad"><$text text={{{ [<live-error>addprefix[✗ ]] }}}/></div>
+<%elseif [<live-count>match[0]] %>
+<div class={{{ wf-live-line wf-live-bad [<pending>] +[join[ ]] }}}><$text text={{{ [<subject>addprefix[✗ does not match ]] }}}/></div>
+<%else%>
+<div class={{{ wf-live-line wf-live-ok [<pending>] +[join[ ]] }}}><$text text={{{ [<subject>addprefix[✓ matches ]] }}}/></div>
+<%endif%>
+</$let>
+</$let>
+</$wf-live>
+</$let></$tiddler>
+<%endif%>
+
+<$let rname={{{ [<currentTiddler>get[wf.recipe]trim[]] }}} rtitle={{{ [function[wf.recipe-title],<rname>] }}}>
+<div class="wf-fld"><span class="wf-label">What it does</span>
+<div class="wf-chips wf-recipe-chips">
+<$list filter="[function[wf.recipes]]" variable="r">
+<$let name={{{ [<r>get[wf.name]] }}}>
+<$button class={{{ wf-chip-btn wf-recipe-chip [<r>!prefix[$:/plugins/rimir/work-focus/]then[wf-dashed]] [<name>match<rname>then[wf-on]] +[join[ ]] }}} data-recipe=<<name>> actions=<<wf-f-recipe-pick>> tooltip={{{ [<r>get[wf.description]] ~[<r>!prefix[$:/plugins/rimir/work-focus/]then[From another plugin]] }}}><$text text={{{ [<r>get[caption]] ~[<name>] }}}/></$button>
+</$let>
+</$list>
+<$button class={{{ wf-chip-btn wf-recipe-chip wf-recipe-custom wf-dashed [<rname>is[blank]then[wf-on]] +[join[ ]] }}} data-recipe="" actions="""<$action-setfield $tiddler=<<currentTiddler>> wf.recipe=""/>""" tooltip="Write the action yourself (wikitext)">Custom…</$button>
+</div>
+</div>
+
+<div class="wf-recipe-form">
+<%if [<rname>is[blank]] %>
+<label class="wf-fld"><span class="wf-label">Action (wikitext)</span>
+<$edit-text field="text" tag="textarea" class="wf-in wf-code wf-f-text" autoHeight="yes" minHeight="60px" rows="3" placeholder="&lt;$action-setfield $tiddler=&lt;&lt;item&gt;&gt; status=&quot;done&quot;/&gt;"/>
+</label>
+<div class="wf-vars">
+<span class="wf-var"><code><$text text="<<item>>"/></code> the dragged tiddler</span>
+<span class="wf-var"><code><$text text="<<area>>"/></code> its area</span>
+<span class="wf-var"><code><$text text="<<date-field>>"/></code> the area's date field</span>
+<span class="wf-var"><code><$text text="<<value>>"/></code> the tile's value</span>
+<span class="wf-var"><code><$text text="<<action>>"/></code> this action</span>
+</div>
+<%elseif [<rtitle>is[blank]] %>
+<div class="wf-help wf-live-bad"><$text text={{{ [<rname>addprefix[Recipe not found: ]] }}}/></div>
+<%else%>
+<$let rform={{{ [function[wf.recipe-form],<rtitle>] }}}>
+<%if [<rform>!is[blank]] %>
+<$transclude $tiddler=<<rform>> $mode="block"/>
+<%else%>
+<div class="wf-help">This recipe has no settings.</div>
+<%endif%>
+</$let>
+<%endif%>
+</div>
+<datalist id="wf-form-fields">
+<$list filter="[<item>fields[]] [<date-field>] -title -text -tags -draft.of -draft.title -creator -modifier +[!is[blank]sort[]]" variable="f"><option value=<<f>>/></$list>
+</datalist>
+
+<$wf-live filter={{{ [<currentTiddler>get[wf.tiles]] }}} source=<<item>> limit="1">
+<$let value={{{ [enlist<live-titles>first[]] }}} action=<<currentTiddler>> hintsrc={{{ [<currentTiddler>has[wf.hint]] ~[<rtitle>has[wf.hint]] }}}>
+<div class="wf-preview">
+<$text text="Preview: "/>
+<%if [<hintsrc>!is[blank]] %>
+<$tiddler tiddler=<<item>>><$transclude $tiddler=<<hintsrc>> $field="wf.hint" $mode="inline"/></$tiddler>
+<%else%>
+<span class="wf-preview-none">no hint (set one under More)</span>
+<%endif%>
+</div>
+</$let>
+</$wf-live>
+</$let>
+
+<div class="wf-fld"><span class="wf-label">More</span>
+<div class="wf-chips">
+<$let gtitle={{{ [<currentTiddler>get[wf.group]trim[]] :map[function[wf.group-title],<currentTiddler>] +[!is[blank]] }}}>
+<%if [<target>!is[blank]] :filter[<gtitle>get[wf.default]match<target>] %>
+<span class="wf-check wf-f-default wf-check-on" title="This action is its group's default (change it in the group's form)">★ default of group</span>
+<%elseif [<gtitle>!is[blank]] %>
+<$checkbox field="wf-form.default" checked="yes" unchecked="" default="" class="wf-check wf-f-default">default of group</$checkbox>
+<%endif%>
+</$let>
+<$checkbox field="wf.hidden" checked="yes" unchecked="" default="" class="wf-check wf-f-hidden">hidden</$checkbox>
+</div>
+<div class="wf-two">
+<label class="wf-fld"><span class="wf-label">Replaces</span>
+<$select field="wf.replaces" default="" class="wf-in wf-f-replaces">
+<option value="">nothing</option>
+<$list filter="[function[wf.actions-all]sort[caption]] -[<target>]" variable="a">
+<option value={{{ [<a>format:titlelist[]] }}}><$text text={{{ [<a>get[caption]] ~[<a>] }}}/><$text text={{{ [<a>get[wf.group]trim[]] :map[function[wf.group-title],<currentTiddler>] +[!is[blank]] :map[function[wf.group-cap],<currentTiddler>] +[addprefix[ (]addsuffix[)]] }}}/></option>
+</$list>
+<$list filter="[<currentTiddler>get[wf.replaces]] -[function[wf.actions-all]format:titlelist[]]" variable="v">
+<option value=<<v>>><$text text=<<v>>/></option>
+</$list>
+</$select>
+</label>
+<label class="wf-fld"><span class="wf-label">Order</span><$edit-text field="wf.order" tag="input" type="number" class="wf-in wf-f-order" placeholder="last"/></label>
+</div>
+<details class="wf-fld wf-f-advanced"><summary class="wf-label">Advanced: tiles filter and templates</summary>
+<label class="wf-fld"><span class="wf-label">Tiles (filter of values)</span>
+<$edit-text field="wf.tiles" tag="textarea" class="wf-in wf-code wf-f-tiles" autoHeight="yes" minHeight="34px" rows="1" placeholder="blank = one tile, e.g. [enlist[+1d +1w]]"/>
+</label>
+<div class="wf-two">
+<label class="wf-fld"><span class="wf-label">Tile label</span><$edit-text field="wf.tile-label" tag="input" class="wf-in wf-code wf-f-tile-label" placeholder="&lt;&lt;value&gt;&gt;"/></label>
+<label class="wf-fld"><span class="wf-label">Tile sub</span><$edit-text field="wf.tile-sub" tag="input" class="wf-in wf-code wf-f-tile-sub" placeholder="none"/></label>
+</div>
+<label class="wf-fld"><span class="wf-label">Hint (wikitext)</span><$edit-text field="wf.hint" tag="input" class="wf-in wf-code wf-f-hint" placeholder="the recipe's"/></label>
+<span class="wf-help">Wikitext with <$text text="<<item>> <<value>> <<action>>"/>; label and sub use the tile's value.</span>
+</details>
+</div>

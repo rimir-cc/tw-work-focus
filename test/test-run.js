@@ -217,7 +217,7 @@ describe("work-focus run", function() {
 		return actions.select(wiki, "I1", "R/Area").groups.filter(function(g) { return g.name === groupName; })[0]
 			.tiles.map(function(t) { return t.value; });
 	}
-	// What a day-strip shows today: today, +1d, next mon, next tue, +1w, each day once (first wins).
+	// What the mute action shows today: +2d, next mon, +1w, each day once (first wins).
 	// (Module code runs in TW's sandbox, so jasmine's mock clock can't move "today".)
 	function expectedDays(list) {
 		var seen = {}, today = new Date().getDay();
@@ -236,20 +236,37 @@ describe("work-focus run", function() {
 		put({title: "A/days", tags: actions.ACTION_TAG, "wf.group": "t-days",
 			"wf.tiles": "[function[wf.distinct-days],[today +1d " + day8(1) + " " + day8(7) + " +1w " + day8(0) + "]]"});
 		expect(groupValues("t-days")).toEqual(["today", "+1d", day8(7)]);
-		// the shipped actions use it: on Sun/Mon the Mon/Tue tile repeats Tmrw or +1w; on Sat Mon repeats 2 days
-		expect(groupValues("move")).toEqual(expectedDays(["today", "+1d", "mon", "tue", "+1w"]));
+		// the shipped mute action uses it: on Sun Mon repeats Tmrw's day, on Sat Mon repeats +2d
 		expect(groupValues("mute")).toEqual(expectedDays(["+2d", "mon", "+1w"]));
+	});
+
+	it("the move tiles roll forward from today: today, +1..+4 days, +1 week", function() {
+		put({title: "I1", due: "20261101", rtest: "yes"});
+		var tiles = actions.select(wiki, "I1", "R/Area").groups.filter(function(g) { return g.name === "move"; })[0].tiles;
+		expect(tiles.map(function(t) { return t.value; })).toEqual(["today", "+1d", "+2d", "+3d", "+4d", "+1w"]);
+		var offsets = [0, 1, 2, 3, 4, 7];
+		var names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+		offsets.forEach(function(n, i) {
+			var d = new Date();
+			d.setDate(d.getDate() + n);
+			// the resolved date of each tile is today + n days
+			expect(wiki.filterTiddlers("[wf-date[" + tiles[i].value + "],[20000101]]")[0]).toBe(day8(n));
+			// labels: Today, Tmrw, the weekday, then +1 wk
+			var label = i === 0 ? "Today" : i === 1 ? "Tmrw" : i === 5 ? "+1 wk" : names[d.getDay()];
+			expect(tiles[i].caption).toBe(label);
+		});
 	});
 
 	it("shipped groups and actions select for an item with a date", function() {
 		put({title: "I1", due: "20261101", rtest: "yes"});
 		var groups = actions.select(wiki, "I1", "R/Area").groups.filter(function(g) { return g.name === "move"; });
-		expect(groups[0].tiles.length).toBe(expectedDays(["today", "+1d", "mon", "tue", "+1w"]).length);
+		expect(groups[0].tiles.length).toBe(6);
 		expect(groups[0].defaultTile.value).toBe("+1d");
 		// relative labels for today and tomorrow, the weekday otherwise
 		expect(groups[0].tiles[0].caption).toBe("Today");
 		expect(groups[0].tiles[1].caption).toBe("Tmrw");
 		expect(groups[0].tiles[2].caption).toMatch(/^\w{3}$/);
+		expect(groups[0].tiles[5].caption).toBe("+1 wk");
 		// the sub line carries the date only: the weekday is already the caption
 		expect(groups[0].tiles[0].sub).toMatch(/^\d\d \w{3}$/);
 		put({title: "R/NoDate", "wf.filter": "[all[current]]"});

@@ -17,9 +17,9 @@ type: text/vnd.tiddlywiki
 !! Restart rules
 
 |!Change |!Needs |
-|JS modules (`click-outside.js`, `ring-layer.js`, `date-operators.js`, `check.js`, `actions.js`, …) |Server restart, then reload |
-|Areas, groups, actions, recipes, info parts, config |Nothing for the definitions; run ↻ to see areas change |
-|`styles.tid`, `engine.tid`, `dock.tid`, `panel.tid` |Reload (they are normal tiddlers) |
+|JS modules (`click-outside.js`, `ring-layer.js`, `date-operators.js`, `check.js`, `actions.js`, `live-filter.js`, `live-widget.js`, `datalist.js` (startup: `list=` on field inputs), …) |Server restart, then reload |
+|Areas, groups, actions, recipes, info parts, config |Nothing for the definitions; saving in edit mode refreshes the dock (outside edit mode run ↻) |
+|`styles.tid`, `engine.tid`, `edit-engine.tid`, `dock.tid`, `panel.tid`, forms, recipe forms |Reload (they are normal tiddlers) |
 
 !! Tests
 
@@ -32,6 +32,12 @@ bin/tw test:e2e work-focus      # Playwright: dock, panel, drag, ring, mutes
 
 # Create a tiddler with the right tag (see //Reference//). Use the same title as a shipped one to override it.
 # Reload. The next drag shows it. Nothing else to register.
+
+!! Edit mode
+
+* A bridge ships `<recipe title>/form` to give its recipe a form; no JS, no restart.
+* Use `wf.tagged`, `wf.actions-all`, `wf.groups-all`, `wf.recipes-all` for tag lists: they leave out the form buffer.
+* The Playwright specs for edit mode clean up the config tiddlers they create (`areas/`, `actions/`, `groups/`) and the edit state.
 
 !! Debugging
 

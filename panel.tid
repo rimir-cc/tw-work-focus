@@ -2,15 +2,30 @@ title: $:/plugins/rimir/work-focus/panel
 type: text/vnd.tiddlywiki
 
 \whitespace trim
-<!-- Open panel: rendered only while $:/temp/rimir/work-focus/open is yes; renders only snapshot titles. -->
+\procedure wf-edit-click()
+<<wf-edit-toggle>>
+<<wf-focus-panel>>
+\end
+<!-- Open panel: rendered only while $:/temp/rimir/work-focus/open is yes; renders only snapshot titles.
+     The .wf-panel element stays across tab switches and edit mode, so it can keep the focus (Esc). -->
 
+<div class={{{ wf-panel [function[wf.editing]then[wf-editing]] +[join[ ]] }}} tabindex="-1">
 <$let checked=<<wf.checked>> tab=<<wf.active-tab>> multi=<<wf.multi-tab>> limit=<<wf.limit>>>
-<div class="wf-panel" tabindex="-1">
 <div class="wf-panel-head">
 <span class="wf-panel-title">Work focus</span>
-<%if [<checked>!is[blank]] %><span class="wf-panel-checked"><$text text={{{ [function[wf.day],<checked>] [function[wf.time],<checked>] +[join[ ]addprefix[checked ]] }}}/></span><%endif%>
+<%if [function[wf.editing]] %>
+<span class="wf-edit-badge">✎ editing setup</span>
+<$button class="wf-btn wf-btn-primary wf-edit-done" actions=<<wf-edit-click>> tooltip="Leave edit mode (Esc)">Done editing</$button>
+<%else%>
+<%if [<checked>!is[blank]] %><span class="wf-panel-checked"><$text text={{{ [function[wf.day],<checked>] [function[wf.time],<checked>] +[join[ ]] }}}/></span><%endif%>
 <$button class="wf-btn wf-panel-refresh" actions=<<wf-refresh>> tooltip="Check all areas now">↻ Check now</$button>
+<$button class="wf-btn wf-edit-toggle" actions=<<wf-edit-click>> tooltip="Edit areas and actions" aria-label="Edit setup">✎</$button>
+<%endif%>
 </div>
+<%if [function[wf.editing]] %>
+{{||$:/plugins/rimir/work-focus/edit-panel}}
+<%endif%>
+<%if [function[wf.editing]else[no]match[no]] [function[wf.edit-view]match[actions]] %>
 <%if [<multi>match[yes]] %>
 <div class="wf-tabs" role="tablist">
 <$list filter="[function[wf.tabs]]" variable="t">
@@ -58,5 +73,6 @@ type: text/vnd.tiddlywiki
 <%endif%>
 <%endif%>
 </$let>
-</div>
+<%endif%>
 </$let>
+</div>

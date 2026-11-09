@@ -1,0 +1,49 @@
+title: $:/plugins/rimir/work-focus/group-form
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+<!-- The group form (form.tid, currentTiddler = buffer). Parent: the group tree two levels deep (a group sits at most
+     three deep), without this group and its subtree. Default action: the actions whose wf.group is this group. -->
+
+<div class="wf-two">
+<label class="wf-fld"><span class="wf-label">Label</span><$edit-text field="caption" tag="input" class="wf-in wf-f-caption" focus="yes" placeholder="e.g. Move"/></label>
+<label class="wf-fld"><span class="wf-label">Icon</span><$edit-text field="wf.icon" tag="input" class="wf-in wf-f-icon wf-list-wf-icons" placeholder="e.g. ↷"/></label>
+</div>
+
+<label class="wf-fld"><span class="wf-label">Inside</span>
+<$select field="wf.parent" default="" class="wf-in wf-f-parent">
+<option value="">top level (ring)</option>
+<$transclude $variable="wf-group-options" depth="2" skip=<<target>>/>
+<$list filter="[<currentTiddler>get[wf.parent]trim[]] -[function[wf.groups-all]get[wf.name]]" variable="g">
+<option value=<<g>>><$text text={{{ [<g>addsuffix[ (no group tiddler)]] }}}/></option>
+</$list>
+</$select>
+</label>
+
+<$let name={{{ [<currentTiddler>get[wf.name]] }}}>
+<%if [<name>!is[blank]] %>
+<span class="wf-help" title="The name actions use in their wf.group field">name: <code><$text text=<<name>>/></code></span>
+<%endif%>
+<%if [<name>is[blank]] %>
+<span class="wf-help">Save the group, then add actions to it; one of them can be its default.</span>
+<%elseif [function[wf.group-actions],<name>count[]match[0]] %>
+<span class="wf-help">No actions in this group yet.</span>
+<%else%>
+<div class="wf-two">
+<label class="wf-fld"><span class="wf-label" title="Runs when the item is dropped on the group itself">Default action</span>
+<$select field="wf.default" default="" class="wf-in wf-f-default-action">
+<option value="">its first tile</option>
+<$list filter="[function[wf.group-actions],<name>]" variable="a">
+<option value=<<a>>><$text text={{{ [<a>get[caption]] ~[<a>] }}}/></option>
+</$list>
+</$select>
+</label>
+<label class="wf-fld"><span class="wf-label">Default tile value</span><$edit-text field="wf.default-value" tag="input" class="wf-in wf-code wf-f-default-value" placeholder="the first"/></label>
+</div>
+<%endif%>
+</$let>
+
+<div class="wf-two">
+<label class="wf-fld"><span class="wf-label">Order</span><$edit-text field="wf.order" tag="input" type="number" class="wf-in wf-f-order" placeholder="last"/></label>
+<div class="wf-fld wf-check-cell" title="Hides the group with its actions and sub-groups (edit mode still shows it)"><$checkbox field="wf.hidden" checked="yes" unchecked="" default="" class="wf-check wf-f-hidden">hidden</$checkbox></div>
+</div>

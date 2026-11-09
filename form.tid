@@ -1,0 +1,163 @@
+title: $:/plugins/rimir/work-focus/form
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+\procedure wf-form-buffer() $:/temp/rimir/work-focus/form/buffer
+\procedure wf-icon-defaults() ↷ 🔕 ✓ ＋ ↗ ★ ⚑ ✎ 📅 ⏸ ▶ ✕ ⚠ ☰ ⌛
+\procedure wf-focus-form()
+<$action-sendmessage $message="tm-focus-selector" $param=".wf-form"/>
+\end
+\procedure wf-form-done()
+<<wf-form-close>>
+<<wf-focus-panel>>
+\end
+\procedure wf-form-save-click()
+<<wf-form-save>>
+<<wf-form-done>>
+\end
+\procedure wf-form-duplicate-click()
+<<wf-form-duplicate>>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/confirm"/>
+<<wf-focus-form>>
+\end
+\procedure wf-form-delete-click()
+<<wf-form-delete>>
+<<wf-focus-panel>>
+\end
+\procedure wf-form-restore-click()
+<$action-deletetiddler $tiddler=<<target>>/>
+<$action-wf-check/>
+<<wf-form-done>>
+\end
+<!-- the group link in the header: its form takes this one's place (an implicit group: a new group with its name) -->
+\procedure wf-form-group-open()
+<$let kind="group" target=<<gtitle>> preset={{{ [<gtitle>is[blank]] :then[[{}]] +[jsonset[wf.name],<gname>jsonset[caption],<gname>] }}} value="" left={{{ [function[wf.form-field],[left]] }}} top={{{ [function[wf.form-field],[top]] }}}>
+<<wf-form-open>>
+</$let>
+<<wf-focus-form>>
+\end
+\procedure wf-form-confirm(what)
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/confirm" text=<<what>>/>
+<<wf-focus-form>>
+\end
+<!-- A tile's label or sub as the ring renders it (actions.js tilesFor): the template field `field` of the buffer,
+     plain text, with value = v, action = the buffer, currentTiddler = the item (item, area, date-field from the form) -->
+\procedure wf-tile-text(v, field)
+\whitespace trim
+<$let value=<<v>> action=<<wf-form-buffer>>>
+<$tiddler tiddler=<<item>>>
+<$wikify name="t" text={{{ [<wf-form-buffer>get<field>] }}} output="text"><$text text={{{ [<t>trim[]] }}}/></$wikify>
+</$tiddler>
+</$let>
+\end
+<!-- the label: the value's own label (wf.tile-labels), else the wf.tile-label template, else the value -->
+\procedure wf-tile-label(v)
+\whitespace trim
+<$let own={{{ [function[wf.tile-label-of],<v>] }}}>
+<%if [<own>!is[blank]] %>
+<$text text=<<own>>/>
+<%elseif [<wf-form-buffer>get[wf.tile-label]!is[blank]] %>
+<$transclude $variable="wf-tile-text" v=<<v>> field="wf.tile-label"/>
+<%else%>
+<$text text=<<v>>/>
+<%endif%>
+</$let>
+\end
+<!-- <option>s of a group select: the group tree (wf.parent) as "Move ▸ Sub" paths, `depth` levels deep, value = wf.name.
+     `skip` (a group title) is left out together with its subtree. -->
+\procedure wf-group-options(depth, skip)
+\whitespace trim
+<$list filter="[function[wf.groups-top]] -[<skip>]" variable="g1">
+<$let p1={{{ [function[wf.group-cap],<g1>] }}}>
+<option value={{{ [<g1>get[wf.name]] }}}><$text text={{{ [<g1>get[wf.hidden]trim[]match[yes]then<p1>addsuffix[ (hidden)]] ~[<p1>] }}}/></option>
+<%if [<depth>compare:integer:gteq[2]] %>
+<$list filter="[function[wf.groups-under],<g1>] -[<skip>]" variable="g2">
+<$let p2={{{ [function[wf.group-cap],<g2>addprefix[ ▸ ]addprefix<p1>] }}}>
+<option value={{{ [<g2>get[wf.name]] }}}><$text text=<<p2>>/></option>
+<%if [<depth>compare:integer:gteq[3]] %>
+<$list filter="[function[wf.groups-under],<g2>] -[<skip>]" variable="g3">
+<option value={{{ [<g3>get[wf.name]] }}}><$text text={{{ [function[wf.group-cap],<g3>addprefix[ ▸ ]addprefix<p2>] }}}/></option>
+</$list>
+<%endif%>
+</$let>
+</$list>
+<%endif%>
+</$let>
+</$list>
+\end
+<!-- Floating form host for actions and groups (layer.tid renders it while $:/temp/rimir/work-focus/form exists).
+     The forms edit the buffer ($:/temp/rimir/work-focus/form/buffer, currentTiddler inside); Save copies it to the
+     target, ✕ / Esc / leaving edit mode drop it. The .wf-form element stays while the form is open (kind/target
+     changes re-render its content only), so it can keep the focus for Esc. Vars for the forms: kind, target, item,
+     area, date-field (the area's), shipped (yes when the target is a plugin shadow). -->
+
+<!-- left/top (px) come from the ring (ring-layer.js formPlace): the form sits next to it; without them it goes to the
+     window edge of the free side -->
+<div class={{{ [function[wf.form-field],[left]then[wf-placed]] ~[function[wf.form-field],[side]match[left]then[wf-side-left]] ~[[wf-side-right]] +[addprefix[wf-form ]] }}} style.left={{{ [function[wf.form-field],[left]addsuffix[px]] }}} style.top={{{ [function[wf.form-field],[top]addsuffix[px]] }}} style.max-height={{{ [function[wf.form-field],[top]addprefix[calc(100vh - ]addsuffix[px - 16px)]] }}} tabindex="-1" role="dialog" aria-label="Edit action or group">
+<$let kind={{{ [function[wf.form-field],[kind]match[group]] ~[[action]] }}} target={{{ [function[wf.form-field],[target]] }}} item={{{ [function[wf.form-field],[item]] }}} area={{{ [function[wf.form-field],[area]] }}} side={{{ [function[wf.form-field],[side]] }}}>
+<$let date-field={{{ [<area>get[wf.date-field]trim[]] }}} shipped={{{ [<target>is[shadow]then[yes]] }}} noun={{{ [<kind>match[group]then[Group]else[Action]] }}} tilevalue={{{ [function[wf.form-field],[value]] :filter[<kind>match[action]] :filter[<target>!is[blank]] }}}>
+<div class="wf-form-head">
+<span class="wf-form-title">
+<%if [<target>is[blank]] %>
+<$text text={{{ [<noun>lowercase[]addprefix[✎ New ]] }}}/>
+<!-- while the value is still one of the tiles (a real filter: can't tell, kept) -->
+<%elseif [<tilevalue>!is[blank]] :filter[function[wf.buffer-tiles-mode]match[filter]] ~[function[wf.buffer-tiles]match<tilevalue>] %>
+<!-- one tile of an action with several: "✎ Move date · tile "Tmrw" (+1d)" -->
+<$text text={{{ [<target>get[caption]] ~[<target>] +[addprefix[✎ ]addsuffix[ · tile "]] }}}/><$transclude $variable="wf-tile-label" v=<<tilevalue>>/><$text text={{{ [<tilevalue>addprefix[" (]addsuffix[)]] }}}/>
+<%else%>
+<$text text={{{ [<target>get[caption]] ~[<target>get[wf.name]] ~[<target>] +[addprefix[ "]addprefix<noun>addprefix[✎ ]addsuffix["]] }}}/>
+<%endif%>
+</span>
+<%if [<shipped>match[yes]] %>
+<span class="wf-form-shipped" title="Shipped with the plugin: saving writes your own copy (an override)"><$text text={{{ [<target>is[tiddler]then[shipped · changed]else[shipped]] }}}/></span>
+<%endif%>
+<$button class="wf-form-close" actions=<<wf-form-done>> tooltip="Close without saving (Esc)" aria-label="Close">✕</$button>
+</div>
+<%if [<kind>match[action]] :filter[function[wf.buffer-field],[wf.tiles]trim[]!is[blank]] %>
+<$let gname={{{ [function[wf.buffer-field],[wf.group]trim[]] }}}>
+<$let gtitle={{{ [function[wf.group-title],<gname>] }}}>
+<$let gcap={{{ [<gtitle>!is[blank]] :map[function[wf.group-cap],<currentTiddler>] ~[<gname>] }}} others={{{ [function[wf.group-actions],<gname>] -[<target>] +[count[]] }}}>
+<%if [<gname>!is[blank]] %>
+<div class="wf-form-sub">
+<$text text={{{ [<others>match[0]then[All ]else[These tiles in ]] }}}/><$button class="wf-form-group-link" actions=<<wf-form-group-open>> tooltip="Edit (rename) the group: leaves this form without saving it"><$text text=<<gcap>>/></$button><$text text={{{ [<others>match[0]then[ tiles belong to this one action.]else[ belong to this one action (the group has others too).]] }}}/>
+</div>
+<%endif%>
+</$let>
+</$let>
+</$let>
+<%endif%>
+<$tiddler tiddler=<<wf-form-buffer>>>
+<div class="wf-form-body">
+<%if [<kind>match[group]] %>
+{{||$:/plugins/rimir/work-focus/group-form}}
+<%else%>
+{{||$:/plugins/rimir/work-focus/action-form}}
+<%endif%>
+</div>
+<datalist id="wf-icons">
+<$list filter="[function[wf.groups-all]] [function[wf.actions-all]] +[get[wf.icon]] [enlist<wf-icon-defaults>] +[unique[]]" variable="i"><option value=<<i>>/></$list>
+</datalist>
+<div class="wf-form-foot">
+<$button class="wf-btn wf-btn-primary wf-form-save" actions=<<wf-form-save-click>> disabled={{{ [<wf-form-buffer>!has[caption]then[yes]] }}} tooltip={{{ [<target>is[blank]then[Create it]else[Write the changes]] }}}>Save</$button>
+<%if [<target>!is[blank]] %>
+<$button class="wf-btn wf-form-duplicate" actions=<<wf-form-duplicate-click>> tooltip="Save a copy and edit the copy">Duplicate</$button>
+<%if [<shipped>match[yes]] :filter[<target>is[tiddler]] %>
+<%if [[$:/temp/rimir/work-focus/confirm]get[text]match[restore]] %>
+<$button class="wf-btn wf-form-restore wf-confirming" actions=<<wf-form-restore-click>>>Restore? yes</$button>
+<%else%>
+<$button class="wf-btn wf-form-restore" actions="""<$transclude $variable="wf-form-confirm" what="restore"/>""" tooltip="Drop your changes and use the shipped version again (asks once more)">↺ Shipped</$button>
+<%endif%>
+<%endif%>
+<$let verb={{{ [<shipped>match[yes]then[Hide]else[Delete]] }}}>
+<%if [[$:/temp/rimir/work-focus/confirm]get[text]match<target>] %>
+<$button class="wf-btn wf-danger wf-confirming wf-form-delete" actions=<<wf-form-delete-click>>><$text text={{{ [<verb>addsuffix[? yes]] }}}/></$button>
+<%else%>
+<$button class="wf-btn wf-danger wf-form-delete" actions="""<$transclude $variable="wf-form-confirm" what=<<target>>/>""" tooltip={{{ [<shipped>match[yes]then[Shipped with the plugin: hides it (asks once more)]else[Delete it (asks once more)]] }}}><$text text=<<verb>>/></$button>
+<%endif%>
+</$let>
+<%endif%>
+</div>
+</$tiddler>
+</$let>
+</$let>
+</div>

@@ -22,7 +22,7 @@ The plugin knows nothing about your data. Areas, extra actions and extra groups 
 
 !! How you use it
 
-# The dock shows one pill per area that has items (alert, then warning, then hint) and the time of the last check. ↻ checks again.
+# The dock shows one pill per area that has items (alert, then warning, then hint) and the time of the last check. ↻ checks again, and so does every save in edit mode.
 # Click the dock: the panel opens. Tabs appear when areas name different tabs. An area shows 5 items, then "+ N more".
 # Click an item to open it. The panel stays open, so you can triage.
 # Press an item, drag more than 5 pixels (touch: hold 400 ms, then drag). The ring opens on the side of the panel that faces free space.
@@ -30,9 +30,20 @@ The plugin knows nothing about your data. Areas, extra actions and extra groups 
 # The item stays in the panel with a mark ("→ Mon 9", "🔕 until Mon 9") until the next check.
 # Click outside the panel to close it. Esc closes it too.
 
+!! Edit mode
+
+Press ✎ in the panel header. The panel switches to edit mode with an //Areas | Actions// switch.
+
+* ''Areas'' — one card per area, grouped by tab. A card edits the area tiddler directly (no Save): caption, level, date field, info parts and the filter, with a live match count. "+ area", "+ tab", ✎ on a tab renames it, drag a card to reorder or to another tab, delete asks twice.
+* ''Actions'' — the item list of the normal panel. Drag a row to pin its ring, then click a tile or its ✎ to open the action or group form beside the ring. The settings tab has the same forms with "+ action" and "+ group".
+* ''The ring'' — drag a row in edit mode: the ring stays pinned after release, tiles carry a ✎ badge, "+ group" and "+ add…" create new ones.
+* ''Esc'' steps back in this order: menu, form, pinned ring, open card, edit mode, panel. "Done editing" leaves edit mode too.
+
+The settings tab lists areas, groups and actions with the same editors.
+
 !! Counts are a snapshot
 
-The area filters run on reload, on ↻ and after an action. They never run while you edit, so the dock costs nothing while you type. Edit a date and the counts stay until you check again.
+The area filters run on reload, on ↻, after an action and at the save points of edit mode: closing an area card (header, Done, Esc, opening another card, switching view or tab), leaving edit mode, "+ area", "+ tab", rename, move, delete, and Save/Duplicate/Delete/"↺ Shipped" in an action or group form. They never run per keystroke, so the dock costs nothing while you type. Edit a date in an ordinary tiddler and the counts stay until you check again. The live count on an area card in edit mode (see //Architecture//) follows the filter text while you type; the dock follows when you close the card.
 
 !! Where the configuration lives
 

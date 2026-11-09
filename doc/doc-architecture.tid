@@ -25,6 +25,12 @@ type: text/vnd.tiddlywiki
 |`click-outside.js` |Startup module: a click outside dock and panel closes the panel |
 |`engine.tid` |Shared `\function`s and `\procedure`s for dock, panel and item |
 |`layer.tid`, `dock.tid`, `panel.tid`, `item.tid` |Page template layer, closed strip, open panel, one row |
+|`edit-engine.tid` |Edit mode `\function`s and `\procedure`s: slugs, tag lists that skip the form buffer (`wf.tagged`, `wf.actions-all`, `wf.groups-all`, `wf.recipes-all`), area and tab operations, form open/save/duplicate/delete/close, `wf-escape` |
+|`edit-panel.tid`, `area-card.tid` |Edit mode body of the panel: tabs, area cards with inline forms |
+|`form.tid`, `action-form.tid`, `group-form.tid`, `info-picker.tid` |The floating form host (rendered by `layer.tid` while the form state exists), the two forms and the `wf.info` editor |
+|`recipes/<name>/form.tid` |One form per shipped recipe |
+|`live-filter.js`, `live-widget.js` |`<$wf-live>`: a filter evaluated once at render and, debounced 300 ms, when its text changes; never on other wiki changes |
+|`datalist.js` |Startup module: adds `list=` to field-name inputs when they take the focus |
 |`styles.tid`, `config/*`, `info/*`, `recipes/*`, `groups/*`, `actions/*` |Styles, defaults, shipped parts |
 
 !! Data flow
@@ -44,6 +50,24 @@ type: text/vnd.tiddlywiki
 |`$:/temp/rimir/work-focus/more/<area>` |`yes` after "+ N more" was clicked |
 |`$:/temp/rimir/work-focus/show-muted` |`yes` while the muted list is shown |
 |`$:/state/rimir/work-focus/tab` |The active tab (per session; not saved) |
+|`$:/temp/rimir/work-focus/edit` |`yes` while the panel is in edit mode |
+|`$:/temp/rimir/work-focus/edit-view` |`areas` (default) or `actions` |
+|`$:/temp/rimir/work-focus/edit-area` |The area whose card is open |
+|`$:/temp/rimir/work-focus/form` |Form state: `kind` (`action` or `group`), `target` (blank = new), `item`, `area`, `side` (`left` or `right`), `value` (the tile clicked in the ring, highlighted in the tiles editor), `left`/`top` (px, set by the ring: the form sits next to it; blank = at the window edge of `side`) |
+|`$:/temp/rimir/work-focus/form/buffer` |The copy the form edits. The transient field `wf-form.default` is applied and removed on Save |
+|`$:/temp/rimir/work-focus/form/tiles`, `…/form/tile-label` |Tiles editor inputs (add row; the label being edited with its old value) |
+|`$:/temp/rimir/work-focus/confirm` |The second click of a delete |
+
+!! Edit mode
+
+* ''Areas'' edit the area tiddler in place. The card's count is the raw filter count from `<$wf-live>`: no first-match placement, drafts counted, so it can be higher than the dock chip.
+* ''Actions and groups'' edit a copy. `wf-form-open` reads the variables `kind`, `target`, `item`, `area`, `preset` (a JSON string of fields for a new one) and `side`, writes the form state and fills the buffer. Save writes the tiddler (`$action-createtiddler … $overwrite`) and closes the form; closing otherwise writes nothing.
+* ''Delete'' on a shipped action or group sets `wf.hidden: yes` (hidden, not gone); "↺ Shipped" in the form removes the override and restores the shipped one. A new one is deleted for real.
+* ''Switching the recipe'' keeps the old recipe's `wf.*` fields in the tiddler.
+* ''Default of group'' (action form) can only set a default; clear it in the group form.
+* ''Replaces'' edits one title, although `wf.replaces` may be a list.
+* ''Recipe forms'': `<recipe title>/form` is rendered with `currentTiddler` = the buffer and the variables `item`, `area`, `date-field`. A bridge plugin adds a form for its own recipe by shipping that tiddler.
+* ''Ring in edit mode'': pinned after release, ✎ badges, "+ group" and "+ add…", hidden actions dimmed. While a form is open hovering does not fan or close arcs (a click does). The ring rebuilds after a save. The 6 group cap with "⋯ More" applies in edit mode too.
 
 !! Limits built in
 

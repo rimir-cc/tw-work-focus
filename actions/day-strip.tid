@@ -5,8 +5,8 @@ wf.icon: ↷
 wf.group: move
 wf.recipe: move-date
 wf.filter: [<date-field>!is[blank]]
-wf.tiles: [function[wf.distinct-days],[today +1d mon tue +1w]]
-wf.tile-label: {{{ [<value>match[today]then[Today]] ~[<value>match[+1d]then[Tmrw]] ~[function[wf.resolve],<value>format:date<wf-fmt-ddd>] }}}
+wf.tiles: [[today]] [[+1d]] [[+2d]] [[+3d]] [[+4d]] [[+1w]]
+wf.tile-label: {{{ [<value>match[today]then[Today]] ~[<value>match[+1d]then[Tmrw]] ~[<value>match[+1w]then[+1 wk]] ~[function[wf.resolve],<value>format:date<wf-fmt-ddd>] }}}
 wf.tile-sub: {{{ [function[wf.resolve],<value>format:date<wf-fmt-date>] }}}
 wf.order: 10
 

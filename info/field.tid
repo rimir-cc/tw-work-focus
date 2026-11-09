@@ -3,6 +3,7 @@ tags: $:/tags/rimir/work-focus/info-part
 type: text/vnd.tiddlywiki
 caption: Field value
 wf.name: field
+wf.param: required
 
 \whitespace trim
 <!-- field:<name> – value of field <<param>>; a value that is a tiddler (or a [[title]] list of them) shows by caption. -->

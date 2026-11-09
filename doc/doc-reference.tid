@@ -45,7 +45,7 @@ Order = tag order. The first area whose filter returns an item claims it. Drafts
 |`wf.default` |Action run when you release on the group itself |
 |`wf.default-value` |Tile value of that action to run (Move: `+1d`) |
 
-Shipped groups: `move`, `mute`, `status`, `create`, `open`. A group without tiles is not shown (`create` has no shipped action).
+Shipped groups: `move`, `mute`, `status`, `create`, `open`. A group without tiles is not shown (edit mode shows it; `create` has no shipped action).
 
 !! Action (tag `$:/tags/rimir/work-focus/action`)
 
@@ -56,10 +56,11 @@ Shipped groups: `move`, `mute`, `status`, `create`, `open`. A group without tile
 |`wf.recipe` |Recipe name. Blank: the tiddler's text is the action string |
 |`wf.tiles` |Filter giving tile values (one tile each). Bracket `+`/`-`: `[[today]] [[+1d]]`. `[function[wf.distinct-days],[today +1d mon]]` drops a date expression that falls on an earlier one's day |
 |`wf.tile-label`, `wf.tile-sub` |Wikitext for a tile's label and sub line (`<<value>>`) |
+|`wf.tile-labels` |JSON object `{"value": "label"}`: a tile's own label, before `wf.tile-label` (blank = the template). Written by the form's tiles editor |
 |`wf.hint` |Wikitext shown while hovering a tile; blank: the recipe's |
 |`wf.mark` |Wikitext for the acted mark; blank: the recipe's, then the tile caption |
 |`wf.no-mark` |`yes`: no mark (Open) |
-|`wf.hidden` |`yes`: never shown |
+|`wf.hidden` |`yes`: not shown outside edit mode (dimmed in edit mode) |
 |`wf.replaces` |Titles of actions this one hides while it matches |
 |`wf.requires` |Filter (engine functions available) whose first value must be non-blank, else nothing runs: no mark, no check, notification `wf.requires-message` (default "Nothing to do"). Blank: the recipe's |
 |recipe parameters |`wf.field`, `wf.to`, `wf.until`, `wf.value`, `wf.title`, `wf.fields`, `wf.tag`, `wf.mode` — see the recipes |
@@ -80,7 +81,33 @@ Variables in filters, hints, marks, tile labels and action strings: `item`, `are
 
 !! Shipped actions
 
-`actions/day-strip` (Move date: Today, Tmrw, Mon, Tue, +1w), `actions/mute` (2 days, Mon, 1 week), `actions/open`. A tile on the same day as an earlier one is left out (Sunday: no Mon, it is Tmrw; Monday: no Tue and no +1w). Tile labels: Today, Tmrw, then weekday; sub line = the date only (`0DD mmm`). Dates in hints use `ddd DD mmm`.
+`actions/day-strip` (Move date: six tiles rolling forward from today: Today, Tmrw, then the weekdays of +2d, +3d, +4d, then +1 wk), `actions/mute` (2 days, Mon, 1 week), `actions/open`. Mute leaves out a tile on the same day as an earlier one (Sunday: no Mon, it is Tmrw). Day-strip labels: Today, Tmrw, +1 wk, else the weekday; sub line = the date only (`0DD mmm`). Dates in hints use `ddd DD mmm`.
+
+!! Config titles written by edit mode
+
+`$:/config/rimir/work-focus/areas/<slug>`, `…/actions/<slug>`, `…/groups/<slug>`. The slug is the caption in lowercase, each run of characters outside `a-z0-9` becomes `-`, trimmed of `-`, made unique with `-2`, `-3`; an empty slug is `new`. A new group's `wf.name` is its slug, unless it starts with a name (✎ on an implicit group keeps that name). Area order is the `list` field of `$:/tags/rimir/work-focus/area`.
+
+!! Procedures and functions of `edit-engine`
+
+|!Name |!Does |
+|`wf-area-open(area)` |Opens the panel in edit mode on the area's tab with its card open |
+|`wf-area-new(tab)`, `wf-area-delete(area)`, `wf-area-move(area, before, tab)` |Area operations; `tab` blank = General |
+|`wf-tab-new`, `wf-tab-rename(old, new)` |Tab operations (a tab exists as long as an area names it) |
+|`wf-form-open` |Opens a form; reads `kind`, `target`, `item`, `area`, `preset`, `side`, and optionally `value` (the clicked tile's value), `left`, `top` (px: the form sits there, next to the ring) |
+|`wf-tile-add(v)`, `wf-tile-remove(v)`, `wf-tile-move(v, by)`, `wf-tile-relabel(v, label)`, `wf-tiles-start` |The tiles editor on the buffer: `wf.tiles` stays a list of `[[value]]` tokens, or keeps the `[function[wf.distinct-days],[…]]` wrapper (as long as no value has a space) |
+|`wf.tiles-mode(t)`, `wf.tiles-values(t)` |`blank`, `list` (only `[[value]]` tokens or bare words), `days` (the distinct-days wrapper) or `filter`; the values of a list |
+|`wf-form-save`, `wf-form-duplicate`, `wf-form-delete`, `wf-form-close` |Form actions on the buffer |
+|`wf-escape` |Esc order: menu, form, pinned ring, open card, edit mode, panel |
+|`wf.tagged(tag)`, `wf.actions-all`, `wf.groups-all`, `wf.recipes-all` |Tag lists without the form buffer: use these, not a bare `tag[]` filter |
+|`wf.slug(text)`, `wf.config-title(prefix, caption)` |Slug and the next free config title |
+
+!! `<$wf-live>`
+
+`<$wf-live filter=… source=… delay="300" limit="3">` evaluates the filter at render and, after a pause of `delay` ms (default 300), when `filter` or `source` changes. Children see `live-count`, `live-titles`, `live-error` and `live-pending`. Other wiki changes only refresh the children. It is the only place where an area filter runs while you type.
+
+!! Recipe form
+
+`<recipe title>/form`: wikitext rendered in the action form with `currentTiddler` = the buffer and the variables `item`, `area`, `date-field`; it edits the `wf.*` fields of the buffer. No form tiddler: "This recipe has no settings."
 
 !! Date expressions
 

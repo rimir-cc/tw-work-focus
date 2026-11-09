@@ -3,17 +3,24 @@ tags: $:/tags/PageTemplate
 type: text/vnd.tiddlywiki
 
 \whitespace trim
-\import $:/plugins/rimir/work-focus/engine
+\import $:/plugins/rimir/work-focus/engine $:/plugins/rimir/work-focus/edit-engine
+\procedure wf-layer-escape()
+<<wf-escape>>
+<<wf-focus-panel>>
+\end
 <%if [[$:/config/rimir/work-focus/enabled]get[text]trim[]match[yes]] %>
 <$wf-ring-layer>
 <div class={{{ wf-layer [[wf-pos-]addsuffix<wf.position>] [{$:/palette}get[color-scheme]match[dark]then[wf-scheme-dark]] +[join[ ]] }}}>
-<$keyboard key="escape" actions=<<wf-close>> tag="div" class="wf-keys">
+<$keyboard key="escape" actions=<<wf-layer-escape>> tag="div" class="wf-keys">
 <$eventcatcher selector=".wf-item" $click=<<wf-catch>> tag="div" class="wf-stack">
 {{||$:/plugins/rimir/work-focus/dock}}
 <%if [[$:/temp/rimir/work-focus/open]get[text]match[yes]] %>
 {{||$:/plugins/rimir/work-focus/panel}}
 <%endif%>
 </$eventcatcher>
+<%if [function[wf.form-open]] %>
+{{||$:/plugins/rimir/work-focus/form}}
+<%endif%>
 </$keyboard>
 </div>
 </$wf-ring-layer>

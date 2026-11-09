@@ -1,0 +1,11 @@
+title: $:/plugins/rimir/work-focus/recipes/mute/form
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+<!-- Recipe form (action-form.tid): currentTiddler = the action buffer. "Until" like move-date's "To" (wf.until). -->
+<div class="wf-two">
+<label class="wf-fld"><span class="wf-label">Hidden until</span>
+<$select field="wf.until" default="" class="wf-in wf-f-until"><$transclude $variable="wf-day-options" field="wf.until"/></$select>
+</label>
+<label class="wf-fld"><span class="wf-label">or type one</span><$edit-text field="wf.until" tag="input" class="wf-in wf-code wf-f-until wf-f-free" placeholder="+3d, fri, 20261224"/></label>
+</div>

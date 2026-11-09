@@ -141,6 +141,14 @@ describe("work-focus actions", function() {
 		expect(captions(tiles)).toEqual(["mon", "tue", "+1w"]);
 	});
 
+	it("wf.tile-labels overrides the label of single values", function() {
+		action("lab", {"wf.order": "1", "wf.tiles": "[[a]] [[b]] [[c]]", "wf.tile-label": "T-<<value>>", "wf.tile-labels": JSON.stringify({b: "Bee", c: "  "})});
+		action("lab2", {"wf.order": "2", "wf.tiles": "[[a]] [[b]]", "wf.tile-labels": JSON.stringify({a: "Ay"})});
+		action("lab3", {"wf.order": "3", "wf.tiles": "[[x]]", "wf.tile-label": "T-<<value>>", "wf.tile-labels": "{broken"});
+		// override if non-blank, else the template, else the value; a broken JSON is ignored
+		expect(captions(find(sel(), "t-g").tiles)).toEqual(["T-a", "Bee", "T-c", "Ay", "b", "T-x"]);
+	});
+
 	it("a plain action takes caption, empty sub and group icon", function() {
 		group("t-i", {"wf.icon": "G"});
 		action("x", {"wf.group": "t-i"});
@@ -215,4 +223,35 @@ describe("work-focus actions", function() {
 		expect(find(sel(), "t-d").defaultTile.caption).toBe("first");
 	});
 
+
+	it("select in edit mode keeps empty and hidden groups", function() {
+		group("t-empty", {"wf.parent": "t-g"});
+		group("t-hid", {"wf.hidden": "yes"});
+		action("shown");
+		action("gone", {"wf.hidden": "yes"});
+		// the shipped groups plus the fixtures exceed six: look inside More too
+		var groups = [];
+		actions.select(wiki, "Item", "Area", {edit: true}).groups.forEach(function(g) {
+			groups = groups.concat(g.name === "more" ? g.groups : [g]);
+		});
+		groups = groups.filter(function(g) { return g.name.indexOf("t-") === 0; });
+		var g = find(groups, "t-g");
+		expect(g.title).toBe("$:/test/wf/g/t-g");
+		expect(g.hidden).toBe(false);
+		expect(captions(g.tiles)).toEqual(["gone", "shown"]);
+		expect(g.tiles.map(function(t) { return t.hidden; })).toEqual([true, false]);
+		expect(find(g.groups, "t-empty").title).toBe("$:/test/wf/g/t-empty");
+		expect(find(groups, "t-hid").hidden).toBe(true);
+		expect(find(groups, "t-empty")).toBeUndefined();
+	});
+
+	it("hidden groups are skipped outside edit mode", function() {
+		group("t-hid", {"wf.hidden": "yes"});
+		action("a", {"wf.group": "t-hid"});
+		action("b");
+		var groups = sel();
+		expect(find(groups, "t-hid")).toBeUndefined();
+		expect(find(groups, "t-g").title).toBe("$:/test/wf/g/t-g");
+		expect(find(groups, "t-g").tiles[0].hidden).toBe(false);
+	});
 });

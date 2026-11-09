@@ -1,0 +1,13 @@
+title: $:/plugins/rimir/work-focus/recipes/move-date/form
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+<!-- Recipe form (action-form.tid): currentTiddler = the action buffer; vars item, area, date-field.
+     "To" is a select of the usual day expressions plus a free input on the same field (wf.to). -->
+<div class="wf-two">
+<label class="wf-fld"><span class="wf-label">Field</span><$edit-text field="wf.field" tag="input" class="wf-in wf-f-field wf-list-wf-form-fields" placeholder={{{ [<date-field>!is[blank]addprefix[area's date field (]addsuffix[)]] ~[[area's date field]] }}}/></label>
+<label class="wf-fld"><span class="wf-label">To</span>
+<$select field="wf.to" default="" class="wf-in wf-f-to"><$transclude $variable="wf-day-options" field="wf.to"/></$select>
+</label>
+</div>
+<$edit-text field="wf.to" tag="input" class="wf-in wf-code wf-f-to wf-f-free" placeholder="or type one: +3d, fri, 20261224"/>

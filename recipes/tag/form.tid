@@ -1,0 +1,14 @@
+title: $:/plugins/rimir/work-focus/recipes/tag/form
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+<!-- Recipe form (action-form.tid): currentTiddler = the action buffer; wf.mode add|remove, wf.tag. -->
+<div class="wf-two">
+<label class="wf-fld"><span class="wf-label">Do</span>
+<$select field="wf.mode" default="add" class="wf-in wf-f-mode">
+<option value="add">add the tag</option>
+<option value="remove">remove the tag</option>
+</$select>
+</label>
+<label class="wf-fld"><span class="wf-label">Tag</span><$edit-text field="wf.tag" tag="input" class="wf-in wf-f-tag" placeholder="e.g. Waiting"/></label>
+</div>

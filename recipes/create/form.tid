@@ -1,0 +1,16 @@
+title: $:/plugins/rimir/work-focus/recipes/create/form
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+<!-- Recipe form (action-form.tid): currentTiddler = the action buffer; wf.title (a filter), wf.fields (JSON). -->
+<label class="wf-fld"><span class="wf-label">New title (filter)</span>
+<$edit-text field="wf.title" tag="input" class="wf-in wf-code wf-f-title" placeholder="[<item>addsuffix[/new]]"/>
+</label>
+<label class="wf-fld"><span class="wf-label">Fields (JSON)</span>
+<$edit-text field="wf.fields" tag="textarea" class="wf-in wf-code wf-f-fields" autoHeight="yes" minHeight="34px" rows="2" placeholder='{"parent": "[<item>]", "tags": "Task"}'/>
+</label>
+<%if [<currentTiddler>get[wf.fields]trim[]!is[blank]] :filter[jsontype[]!match[object]] %>
+<span class="wf-help wf-live-bad">✗ not a JSON object</span>
+<%else%>
+<span class="wf-help">Each field gets the first result of its filter; <$text text="<<item>>"/> is the dragged tiddler. The new tiddler opens after creating.</span>
+<%endif%>

@@ -1,0 +1,92 @@
+title: $:/plugins/rimir/work-focus/edit-panel
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+\procedure wf-view-set(view)
+<$list filter="[[$:/temp/rimir/work-focus/edit-area]is[tiddler]]" variable="x"><$action-wf-check/></$list>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/edit-view" text=<<view>>/>
+<<wf-focus-panel>>
+\end
+\procedure wf-tab-pick()
+<$list filter="[<t>!match<tab>]" variable="x">
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/edit-area"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/confirm"/>
+<$list filter="[[$:/temp/rimir/work-focus/edit-area]is[tiddler]]" variable="y"><$action-wf-check/></$list>
+</$list>
+<$action-setfield $tiddler="$:/state/rimir/work-focus/tab" text=<<t>>/>
+<<wf-focus-panel>>
+\end
+\procedure wf-tab-drop()
+<$list filter="[<actionTiddler>tag[$:/tags/rimir/work-focus/area]]" variable="x">
+<$transclude $variable="wf-area-move" area=<<actionTiddler>> before="" tab=<<t>>/>
+</$list>
+\end
+\procedure wf-rename-start()
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/tab-rename" old=<<t>> text={{{ [function[wf.tab-label],<t>] }}}/>
+\end
+\procedure wf-rename-save()
+<$let new={{{ [[$:/temp/rimir/work-focus/tab-rename]get[text]trim[]] }}}>
+<$list filter="[<new>!is[blank]] -[function[wf.tab-label],<t>]" variable="x">
+<$transclude $variable="wf-tab-rename" old=<<t>> new=<<new>>/>
+</$list>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/tab-rename"/>
+<<wf-focus-panel>>
+</$let>
+\end
+\procedure wf-rename-cancel()
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/tab-rename"/>
+<<wf-focus-panel>>
+\end
+\procedure wf-tab-add()
+<$let newtab={{{ [function[wf.new-tab]] }}}>
+<<wf-tab-new>>
+<$action-setfield $tiddler="$:/state/rimir/work-focus/tab" text=<<newtab>>/>
+</$let>
+\end
+\procedure wf-area-add()
+<$transclude $variable="wf-area-new" tab=<<t>>/>
+\end
+<!-- Edit mode body (panel.tid while $:/temp/rimir/work-focus/edit is yes): view switch; Areas view = all tabs
+     with ✎ rename / "+ tab", the area cards of the active tab and "+ area". Vars from panel: tab.
+     Engine and edit-engine in scope via layer. Cards drop onto tabs (end of that tab) and onto "+ area". -->
+
+<$let view=<<wf.edit-view>>>
+<div class="wf-edit-views" role="tablist">
+<$list filter="areas actions" variable="v">
+<$button class={{{ wf-edit-view [<v>match<view>then[wf-on]] +[join[ ]] }}} data-wf-view=<<v>> actions="""<$transclude $variable="wf-view-set" view=<<v>>/>""" role="tab">
+<$text text={{{ [<v>match[areas]then[Areas]else[Actions]] }}}/>
+</$button>
+</$list>
+</div>
+<%if [<view>match[actions]] %>
+<div class="wf-edit-note">Drag an item to edit its ring…</div>
+<%else%>
+<div class="wf-tabs wf-edit-tabs" role="tablist">
+<$list filter="[function[wf.tabs]]" variable="t">
+<$droppable actions=<<wf-tab-drop>> effect="move" tag="span" class={{{ wf-tab [<t>match<tab>then[wf-tab-on]] +[join[ ]] }}} data-wf-tab=<<t>>>
+<%if [[$:/temp/rimir/work-focus/tab-rename]get[old]match<t>] %>
+<$keyboard key="enter" actions=<<wf-rename-save>>>
+<$keyboard key="escape" actions=<<wf-rename-cancel>>>
+<$edit-text tiddler="$:/temp/rimir/work-focus/tab-rename" tag="input" class="wf-tab-input" focus="yes" placeholder="Tab name"/>
+</$keyboard>
+</$keyboard>
+<%else%>
+<$button class="wf-tab-pick" actions=<<wf-tab-pick>> role="tab"><$text text={{{ [function[wf.tab-label],<t>] }}}/></$button>
+<$button class="wf-tab-rename" actions=<<wf-rename-start>> tooltip="Rename tab" aria-label="Rename tab">✎</$button>
+<%endif%>
+</$droppable>
+</$list>
+<$button class="wf-tab-add" actions=<<wf-tab-add>> tooltip="New tab with a new area">+ tab</$button>
+</div>
+<div class="wf-panel-body wf-edit-body">
+<$list filter="[function[wf.tab-areas],<tab>]" variable="area">
+{{||$:/plugins/rimir/work-focus/area-card}}
+</$list>
+<$let t=<<tab>>>
+<$droppable actions=<<wf-tab-drop>> effect="move" tag="div" class="wf-area-add-drop">
+<$button class="wf-area-add" actions=<<wf-area-add>>><$text text={{{ [function[wf.tab-label],<tab>addprefix[+ area in "]addsuffix["]] }}}/></$button>
+</$droppable>
+</$let>
+</div>
+<%endif%>
+</$let>

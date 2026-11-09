@@ -50,7 +50,7 @@ wf.mark: ✓ done
 Tile values come from `wf.tiles`, a filter. Values with `+` or `-` must be bracketed.
 
 ```
-wf.tiles: [[today]] [[+1d]] [[+3d]] [[mon]]
+wf.tiles: [[today]] [[+1d]] [[+2d]] [[+3d]] [[+4d]] [[+1w]]
 ```
 
 !! Set a field with the shipped recipe
@@ -64,6 +64,20 @@ wf.recipe: set-field
 wf.field: status
 wf.value: waiting
 ```
+
+!! A recipe form for your own recipe
+
+A bridge plugin that ships a recipe `$:/plugins/me/bridge/recipes/ping` adds its settings by shipping `$:/plugins/me/bridge/recipes/ping/form`. Rendered with `currentTiddler` = the buffer:
+
+```
+title: $:/plugins/me/bridge/recipes/ping/form
+
+<label>Channel <$edit-text field="wf.channel" tag="input"/></label>
+```
+
+!! Edit instead of writing tiddlers
+
+Press ✎ in the panel header, open the card of an area and type a filter: the count under it follows after a short pause. In the Actions view drag a row and release: the ring stays pinned, and a click on a tile (or its ✎) opens the action form. The settings tab opens the same form, also for a new action ("+ action"). Fill the label, group and recipe, press Save.
 
 !! Replace a shipped action
 

@@ -1,0 +1,114 @@
+title: $:/plugins/rimir/work-focus/area-card
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+\procedure wf-card-toggle()
+<<wf-focus-panel>>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/confirm"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/info-add"/>
+<!-- closing a card (this one, or the one open while another opens) saves it: refresh the dock once -->
+<$list filter="[[$:/temp/rimir/work-focus/edit-area]is[tiddler]]" variable="x"><$action-wf-check/></$list>
+<$list filter="[[$:/temp/rimir/work-focus/edit-area]get[text]match<area>]" variable="x" emptyMessage="""<$action-setfield $tiddler="$:/temp/rimir/work-focus/edit-area" text=<<area>>/>""">
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/edit-area"/>
+</$list>
+\end
+\procedure wf-card-drop()
+<$list filter="[<actionTiddler>tag[$:/tags/rimir/work-focus/area]] -[<area>]" variable="x">
+<$transclude $variable="wf-area-move" area=<<actionTiddler>> before=<<area>> tab={{{ [function[wf.tab-of],<area>] }}}/>
+</$list>
+\end
+\procedure wf-card-level()
+<$action-setfield $tiddler=<<area>> wf.level=<<l>>/>
+\end
+\procedure wf-card-delete()
+<<wf-focus-panel>>
+<$transclude $variable="wf-area-delete" area=<<area>>/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/edit-area"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/confirm"/>
+\end
+\procedure wf-card-close()
+<<wf-focus-panel>>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/edit-area"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/confirm"/>
+<$action-wf-check/>
+\end
+\procedure wf-card-count()
+\whitespace trim
+<%if [<live-error>!is[blank]] %>
+<span class="wf-area-count wf-count-error" title=<<live-error>>>!</span>
+<%else%>
+<span class={{{ wf-area-count [<live-pending>match[yes]then[wf-pending]] +[join[ ]] }}}><$text text={{{ [<live-count>addsuffix[ now]] }}}/></span>
+<%endif%>
+\end
+<!-- One area card in edit mode. Vars: area (title), tab. Closed: summary (name, level, live count, filter, date
+     field, info). Open ($:/temp/rimir/work-focus/edit-area = area): inline form editing the area tiddler directly.
+     The inputs sit outside any <$wf-live> and outside any $let that depends on what they edit (focus).
+     ⋮⋮ drags the card (TW $draggable); dropping a card here puts it before this one, in this card's tab. -->
+
+<$let open={{{ [[$:/temp/rimir/work-focus/edit-area]get[text]match<area>then[yes]] }}}>
+<$droppable actions=<<wf-card-drop>> effect="move" tag="div" class="wf-card-drop">
+<$draggable tiddler=<<area>> selector=".wf-grip" tag="div" class={{{ wf-area-card [<open>match[yes]then[wf-open]] +[join[ ]] }}} data-wf-area-card=<<area>>>
+<span class="wf-grip" draggable="true" title="Drag to reorder, or onto a tab to move it there">⋮⋮</span>
+<$button class="wf-card-head" actions=<<wf-card-toggle>> tooltip={{{ [<open>match[yes]then[Close]else[Edit this area]] }}}>
+<span class="wf-card-row">
+<span class="wf-card-name"><$text text={{{ [function[wf.caption],<area>] }}}/></span>
+<$let level={{{ [function[wf.level],<area>] }}}><span class={{{ wf-lvl [[wf-level-]addsuffix<level>] +[join[ ]] }}}><$text text=<<level>>/></span></$let>
+<$wf-live filter={{{ [<area>get[wf.filter]] }}} limit="0"><<wf-card-count>></$wf-live>
+</span>
+<%if [<open>!match[yes]] %>
+<span class="wf-card-filter"><$text text={{{ [<area>get[wf.filter]trim[]] ~[[no filter yet]] }}}/></span>
+<$let df={{{ [<area>get[wf.date-field]trim[]!is[blank]addprefix[date field: ]] }}} info={{{ [<area>get[wf.info]enlist-input[]] :map[<currentTiddler>split[:]butfirst[]join[:]!is[blank]else<currentTiddler>] +[join[ · ]addprefix[info: ]] }}}>
+<%if [<df>] [<info>] +[!is[blank]first[]] %><span class="wf-card-meta"><$text text={{{ [<df>] [<info>] +[!is[blank]join[ · ]] }}}/></span><%endif%>
+</$let>
+<%endif%>
+</$button>
+<%if [<open>match[yes]] %>
+<div class="wf-card-form">
+<div class="wf-two">
+<label class="wf-fld"><span class="wf-label">Name</span><$edit-text tiddler=<<area>> field="caption" tag="input" class="wf-in wf-f-caption" focus="yes" placeholder="Area name"/></label>
+<div class="wf-fld"><span class="wf-label">Level</span>
+<div class="wf-chips">
+<$list filter="alert warning hint" variable="l">
+<$button class={{{ wf-chip-btn wf-f-level [[wf-level-]addsuffix<l>] [function[wf.level],<area>match<l>then[wf-on]] +[join[ ]] }}} data-level=<<l>> actions=<<wf-card-level>>><$text text=<<l>>/></$button>
+</$list>
+</div>
+</div>
+</div>
+<label class="wf-fld"><span class="wf-label">Filter (which tiddlers)</span>
+<$edit-text tiddler=<<area>> field="wf.filter" tag="textarea" class="wf-in wf-code wf-f-filter" autoHeight="yes" minHeight="34px" rows="1" placeholder="[tag[Task]!status[done]]"/>
+</label>
+<$wf-live filter={{{ [<area>get[wf.filter]] }}} limit="3">
+<%if [<live-error>!is[blank]] %>
+<div class="wf-live-line wf-live-bad"><$text text={{{ [<live-error>addprefix[✗ ]] }}}/></div>
+<%elseif [<live-count>match[0]] %>
+<div class={{{ wf-live-line wf-live-none [<live-pending>match[yes]then[wf-pending]] +[join[ ]] }}}>No tiddlers match</div>
+<%else%>
+<div class={{{ wf-live-line wf-live-ok [<live-pending>match[yes]then[wf-pending]] +[join[ ]] }}}><$text text={{{ [<live-count>match[1]then[✓ 1 tiddler matches: ]] ~[<live-count>addprefix[✓ ]addsuffix[ tiddlers match: ]] }}}/><$text text={{{ [enlist<live-titles>] :map[function[wf.label],<currentTiddler>] [<live-count>compare:integer:gt[3]then[…]] +[join[, ]] }}}/></div>
+<%endif%>
+<datalist id="wf-fields">
+<$list filter="[enlist<live-titles>fields[]] -title -text -tags -draft.of -draft.title +[sort[]]" variable="f"><option value=<<f>>/></$list>
+</datalist>
+</$wf-live>
+<div class="wf-two">
+<label class="wf-fld"><span class="wf-label">Date field</span><$edit-text tiddler=<<area>> field="wf.date-field" tag="input" class="wf-in wf-f-date-field wf-fields-input" placeholder="e.g. due"/></label>
+<details class="wf-fld wf-f-when"><summary class="wf-label">Wording</summary>
+<$edit-text tiddler=<<area>> field="wf.when-past" tag="input" class="wf-in wf-f-when-past" placeholder="<<n>>d ago"/>
+<$edit-text tiddler=<<area>> field="wf.when-today" tag="input" class="wf-in wf-f-when-today" placeholder="today"/>
+<$edit-text tiddler=<<area>> field="wf.when-future" tag="input" class="wf-in wf-f-when-future" placeholder="in <<n>>d"/>
+<span class="wf-help">&lt;&lt;n&gt;&gt; = days</span>
+</details>
+</div>
+<div class="wf-fld"><span class="wf-label">Info line</span>{{||$:/plugins/rimir/work-focus/info-picker}}</div>
+<div class="wf-card-foot">
+<$button class="wf-btn wf-btn-primary wf-card-done" actions=<<wf-card-close>>>Done</$button>
+<%if [[$:/temp/rimir/work-focus/confirm]get[text]match<area>] %>
+<$button class="wf-btn wf-danger wf-confirming wf-f-delete" actions=<<wf-card-delete>>>Delete? yes</$button>
+<%else%>
+<$button class="wf-btn wf-danger wf-f-delete" set="$:/temp/rimir/work-focus/confirm" setTo=<<area>> tooltip="Delete this area (asks once more)">Delete</$button>
+<%endif%>
+</div>
+</div>
+<%endif%>
+</$draggable>
+</$droppable>
+</$let>

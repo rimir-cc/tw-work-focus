@@ -104,8 +104,15 @@ function compareTiles(a, b) {
 	return compareOrder(a, b) || compareText(a._caption, b._caption) || (a._index - b._index);
 }
 
+// The edit form's buffer (edit-engine.tid) is a tagged copy of the action/group being edited: never a real one
+var FORM_BUFFER = "$:/temp/rimir/work-focus/form/buffer";
+
 function allTagged(wiki, tag) {
-	return wiki.filterTiddlers("[all[shadows+tiddlers]tag[" + tag + "]!is[draft]]");
+	return wiki.filterTiddlers("[all[shadows+tiddlers]tag[" + tag + "]!is[draft]] -[[" + FORM_BUFFER + "]]");
+}
+
+function isHidden(fields) {
+	return (fields["wf.hidden"] || "").trim() === "yes";
 }
 
 // Group definitions by wf.name
@@ -123,23 +130,30 @@ function groupDefs(wiki) {
 // The tiles one matching action contributes; `widget` carries the context and action variables.
 // _caption/_index are sort keys, removed when the groups are finished.
 function tilesFor(wiki, title, fields, widget, item) {
+	var hidden = isHidden(fields);
 	var order = orderOf(fields["wf.order"]);
 	var icon = fields["wf.icon"] || "";
 	var actionCaption = fields.caption || title;
 	var tilesFilter = (fields["wf.tiles"] || "").trim();
 	if(!tilesFilter) {
-		return [{action: title, caption: actionCaption, sub: "", icon: icon, value: "", order: order, _caption: actionCaption, _index: 0}];
+		return [{action: title, caption: actionCaption, sub: "", icon: icon, value: "", order: order, hidden: hidden, _caption: actionCaption, _index: 0}];
 	}
 	var values = runFilter(wiki, tilesFilter, widget, item) || [];
+	// wf.tile-labels: JSON {value: label} set by the form's tiles editor; a blank label means the template
+	var labels = $tw.utils.parseJSONSafe(fields["wf.tile-labels"] || "{}", function() { return {}; }) || {};
 	return values.map(function(value, index) {
-		var w = variablesWidget(wiki, {value: value}, widget);
-		var caption = fields["wf.tile-label"] ? renderText(wiki, fields["wf.tile-label"], w) : value;
+		var w = variablesWidget(wiki, {value: value}, widget),
+			own = typeof labels[value] === "string" ? labels[value].trim() : "";
+		var caption = own || (fields["wf.tile-label"] ? renderText(wiki, fields["wf.tile-label"], w) : value);
 		return {action: title, caption: caption, sub: renderText(wiki, fields["wf.tile-sub"], w), icon: icon, value: value, order: order,
-			_caption: actionCaption, _index: index};
+			hidden: hidden, _caption: actionCaption, _index: index};
 	});
 }
 
-exports.select = function(wiki, item, area) {
+// options.edit: every group tiddler appears (also empty ones), hidden actions and groups are
+// kept and flagged `hidden: true`; otherwise hidden groups (with their subtree) and actions are skipped
+exports.select = function(wiki, item, area, options) {
+	var edit = !!(options && options.edit);
 	var vars = exports.context(wiki, item, area);
 	var defs = groupDefs(wiki);
 	// Matching, visible actions; filters see the global and the engine functions
@@ -147,7 +161,7 @@ exports.select = function(wiki, item, area) {
 	var found = [];
 	allTagged(wiki, ACTION_TAG).forEach(function(title) {
 		var fields = wiki.getTiddler(title).fields;
-		if((fields["wf.hidden"] || "").trim() === "yes") {
+		if(!edit && isHidden(fields)) {
 			return;
 		}
 		var widget = variablesWidget(wiki, {action: title, value: ""}, base);
@@ -166,7 +180,7 @@ exports.select = function(wiki, item, area) {
 			return nodes[name];
 		}
 		var def = defs[name] || {};
-		var n = nodes[name] = {name: name, caption: def.caption || name, icon: def["wf.icon"] || "", order: orderOf(def["wf.order"]),
+		var n = nodes[name] = {name: name, title: def.title || "", hidden: isHidden(def), caption: def.caption || name, icon: def["wf.icon"] || "", order: orderOf(def["wf.order"]),
 			defaultAction: def["wf.default"] || "", defaultValue: def["wf.default-value"] || "", defaultTile: null, tiles: [], groups: [], parent: null};
 		var parentName = def["wf.parent"];
 		if(parentName && parentName !== name && !(guard && guard[parentName])) {
@@ -180,6 +194,12 @@ exports.select = function(wiki, item, area) {
 		var d = 1;
 		while(n.parent) { d++; n = n.parent; }
 		return d;
+	}
+	function hiddenChain(n) {
+		for(var c = n; c; c = c.parent) {
+			if(c.hidden) { return true; }
+		}
+		return false;
 	}
 	function attachTarget(n) {
 		var chain = [];
@@ -200,29 +220,32 @@ exports.select = function(wiki, item, area) {
 			target.tiles.push(tile);
 		});
 	});
+	if(edit) {
+		Object.keys(defs).forEach(function(name) { node(name); });
+	}
 	// Link nodes: each node goes under its (possibly capped) parent
 	var tops = [];
 	Object.keys(nodes).forEach(function(name) {
 		var n = nodes[name];
-		if(depth(n) > MAX_DEPTH) {
+		if(depth(n) > MAX_DEPTH || (!edit && hiddenChain(n))) {
 			return;
 		}
 		if(n.parent) { n.parent.groups.push(n); } else { tops.push(n); }
 	});
 	function finish(n) {
 		n.groups = n.groups.map(finish).filter(Boolean);
-		if(!n.tiles.length && !n.groups.length) {
+		if(!edit && !n.tiles.length && !n.groups.length) {
 			return null;
 		}
 		n.tiles.sort(compareTiles);
 		n.tiles.forEach(function(t) { delete t._caption; delete t._index; });
 		n.groups.sort(compare);
 		n.defaultTile = n.tiles.filter(function(t) { return t.action === n.defaultAction && (!n.defaultValue || t.value === n.defaultValue); })[0] || n.tiles[0] || null;
-		return {name: n.name, caption: n.caption, icon: n.icon, order: n.order, defaultTile: n.defaultTile, tiles: n.tiles, groups: n.groups};
+		return {name: n.name, title: n.title, hidden: n.hidden, caption: n.caption, icon: n.icon, order: n.order, defaultTile: n.defaultTile, tiles: n.tiles, groups: n.groups};
 	}
 	var groups = tops.map(finish).filter(Boolean).sort(compare);
 	if(groups.length > MAX_GROUPS) {
-		var more = {name: "more", caption: "More", icon: "⋯", order: null, defaultTile: null, tiles: [], groups: groups.slice(MAX_GROUPS - 1)};
+		var more = {name: "more", title: "", hidden: false, caption: "More", icon: "⋯", order: null, defaultTile: null, tiles: [], groups: groups.slice(MAX_GROUPS - 1)};
 		groups = groups.slice(0, MAX_GROUPS - 1).concat([more]);
 	}
 	return {groups: groups};

@@ -1,0 +1,312 @@
+title: $:/plugins/rimir/work-focus/edit-engine
+type: text/vnd.tiddlywiki
+
+\whitespace trim
+
+\procedure wf-engine() $:/plugins/rimir/work-focus/engine
+
+\procedure wf-slug-re() [^a-z0-9]+
+\procedure wf-slug-edge() ^-|-$
+
+\function wf.slug(text) [<text>lowercase[]search-replace:g:regexp<wf-slug-re>,[-]search-replace:g:regexp<wf-slug-edge>,[]!is[blank]] ~[[new]]
+\function wf.exists(title) [<title>is[tiddler]] [<title>is[shadow]] +[first[]]
+\function wf.config-base(prefix, caption) [function[wf.slug],<caption>addprefix<prefix>]
+\function wf.config-title(prefix, caption) [[]] [range[2],[300]addprefix[-]] :map[function[wf.config-base],<prefix>,<caption>addsuffix<currentTiddler>] :filter[function[wf.exists],<currentTiddler>count[]match[0]] +[first[]]
+\function wf.editing() [[$:/temp/rimir/work-focus/edit]get[text]match[yes]]
+\function wf.form-open() [[$:/temp/rimir/work-focus/form]is[tiddler]then[yes]]
+\function wf.edit-view() [[$:/temp/rimir/work-focus/edit-view]get[text]] :intersection[enlist[areas actions]] ~[[areas]]
+\function wf.area-rest(area) [function[wf.areas]] -[<area>]
+\function wf.tab-value(tab) [<tab>!match<wf.no-tab>]
+\function wf.tab-key(tab) [<tab>!is[blank]] ~[function[wf.no-tab]]
+\function wf.new-tab() [[New tab]] [range[2],[100]addprefix[New tab ]] :filter[function[wf.tabs]match<currentTiddler>count[]match[0]] +[first[]]
+\function wf.form-field(name) [[$:/temp/rimir/work-focus/form]get<name>]
+\function wf.buffer-field(name) [[$:/temp/rimir/work-focus/form/buffer]get<name>]
+\function wf.kind-prefix(kind) [<kind>match[group]then[$:/config/rimir/work-focus/groups/]else[$:/config/rimir/work-focus/actions/]]
+\function wf.tagged(tag) [all[shadows+tiddlers]tag<tag>!is[draft]] -[[$:/temp/rimir/work-focus/form/buffer]]
+\function wf.groups-tagged() [function[wf.tagged],[$:/tags/rimir/work-focus/group]]
+\function wf.actions-all() [function[wf.tagged],[$:/tags/rimir/work-focus/action]]
+\function wf.recipes-all() [function[wf.tagged],[$:/tags/rimir/work-focus/recipe]]
+\function wf.group-title(name) [function[wf.groups-tagged]] :filter[get[wf.name]match<name>] +[first[]]
+\function wf.group-cap(group) [<group>get[caption]] ~[<group>get[wf.name]] ~[<group>]
+\function wf.groups-all() [function[wf.groups-tagged]has[wf.name]sort[caption]] :sort:number[get[wf.order]else[9999]]
+\function wf.group-parent(group) [<group>get[wf.parent]trim[]] :map[function[wf.group-title],<currentTiddler>] -[<group>] +[!is[blank]]
+\function wf.groups-top() [function[wf.groups-all]] :filter[function[wf.group-parent],<currentTiddler>count[]match[0]]
+\function wf.groups-under(group) [function[wf.groups-all]] :filter[function[wf.group-parent],<currentTiddler>match<group>]
+\function wf.group-actions(name) [function[wf.actions-all]] :filter[get[wf.group]trim[]match<name>] +[sort[caption]]
+\function wf.recipes() [enlist[set-field move-date mute tag create open]addprefix[$:/plugins/rimir/work-focus/recipes/]] :filter[tag[$:/tags/rimir/work-focus/recipe]has[wf.name]] [function[wf.recipes-all]has[wf.name]!prefix[$:/plugins/rimir/work-focus/]sort[caption]]
+\function wf.recipe-title(name) [function[wf.recipes-all]] :filter[get[wf.name]match<name>] +[first[]]
+\function wf.recipe-form(recipe) [<recipe>!is[blank]addsuffix[/form]] :filter[is[tiddler]] [<recipe>!is[blank]addsuffix[/form]is[shadow]] +[first[]]
+
+<!-- Tiles editor (action-form.tid): wf.tiles as an editable value list. "days" = the shipped
+     [function[wf.distinct-days],[v1 v2]] wrapper (kept on write), "list" = only [[value]] tokens or bare words,
+     "filter" = anything else (edited as text under Advanced), "blank" = one tile. -->
+\procedure wf-lb() [[
+\procedure wf-rb() ]]
+\procedure wf-days-head() [function[wf.distinct-days],[
+\procedure wf-days-re() ^\[function\[wf\.distinct-days\],\[[^\[\]]*\]\]$
+\procedure wf-plain-re() ^\s*(?:(?:\[\[[^\]]*\]\]|[^\s\[\]{}<>|+\-~=:!"'][^\s\[\]{}<>|]*)(?:\s+|$))*$
+\procedure wf-bad-value-re() [\[\]]
+\procedure wf-tile-presets() today +1d +2d +3d +4d +5d +6d mon tue wed thu fri sat sun +1w +2w
+\procedure wf-form-tiles() $:/temp/rimir/work-focus/form/tiles
+\procedure wf-form-tile-label() $:/temp/rimir/work-focus/form/tile-label
+
+\function wf.tiles-mode(t) [<t>trim[]is[blank]then[blank]] ~[<t>trim[]regexp<wf-days-re>then[days]] ~[<t>trim[]regexp<wf-plain-re>then[list]] ~[[filter]]
+\function wf.tiles-src(t) [function[wf.tiles-mode],<t>match[days]then<t>trim[]removeprefix<wf-days-head>removesuffix<wf-rb>] [function[wf.tiles-mode],<t>match[list]then<t>]
+\function wf.tiles-values(t) [function[wf.tiles-src],<t>enlist-input[]]
+\function wf.buffer-tiles() [function[wf.tiles-values],{$:/temp/rimir/work-focus/form/buffer!!wf.tiles}]
+\function wf.buffer-tiles-mode() [function[wf.tiles-mode],{$:/temp/rimir/work-focus/form/buffer!!wf.tiles}]
+\function wf.tiles-text(days, values) [<days>match[yes]] :filter[enlist<values>regexp[\s]count[]match[0]] :filter[enlist<values>count[]!match[0]] :then[enlist<values>join[ ]addprefix<wf-days-head>addsuffix<wf-rb>] ~[enlist<values>addprefix<wf-lb>addsuffix<wf-rb>join[ ]]
+\function wf.tile-label-of(v) [function[wf.buffer-field],[wf.tile-labels]jsonget<v>trim[]]
+
+\procedure wf-tiles-set(values)
+<$let text={{{ [function[wf.buffer-tiles-mode]match[days]then[yes]] ~[[no]] :map[function[wf.tiles-text],<currentTiddler>,<values>] }}}>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/form/buffer" wf.tiles=<<text>>/>
+</$let>
+\end
+
+\procedure wf-tile-add(v)
+<$list filter="[<v>trim[]!is[blank]] -[<v>trim[]regexp<wf-bad-value-re>] -[function[wf.buffer-tiles]]" variable="nv">
+<$transclude $variable="wf-tiles-set" values={{{ [function[wf.buffer-tiles]] [<nv>] +[format:titlelist[]join[ ]] }}}/>
+</$list>
+\end
+
+\procedure wf-tile-remove(v)
+<$transclude $variable="wf-tiles-set" values={{{ [function[wf.buffer-tiles]] -[<v>] +[format:titlelist[]join[ ]] }}}/>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/form/buffer" wf.tile-labels={{{ [function[wf.buffer-field],[wf.tile-labels]jsondelete<v>] +[!match[{}]] }}}/>
+\end
+
+\procedure wf-tile-move(v, by)
+<$list filter="[<by>match[-1]]" variable="x">
+<$transclude $variable="wf-tiles-set" values={{{ [function[wf.buffer-tiles]] +[move:-1<v>format:titlelist[]join[ ]] }}}/>
+</$list>
+<$list filter="[<by>match[1]]" variable="x">
+<$transclude $variable="wf-tiles-set" values={{{ [function[wf.buffer-tiles]] +[move:1<v>format:titlelist[]join[ ]] }}}/>
+</$list>
+\end
+
+<!-- blank label: back to the template (the key goes, an empty object goes too) -->
+\procedure wf-tile-relabel(v, label)
+<$let labels={{{ [function[wf.buffer-field],[wf.tile-labels]] ~[[{}]] }}}>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/form/buffer" wf.tile-labels={{{ [<label>trim[]!is[blank]] :then[<labels>jsonset<v>,<label>] ~[<labels>jsondelete<v>] +[!match[{}]] }}}/>
+</$let>
+\end
+
+<!-- "Make several tiles": date recipes start with the single case they have (their fixed wf.to / wf.until, else +1d),
+     which the tiles take over (the param is cleared, or every tile would go to that one date); others open the add row -->
+\procedure wf-tiles-start()
+<$list filter="[function[wf.buffer-field],[wf.recipe]trim[]] :intersection[enlist[move-date mute]]" variable="r" emptyMessage="""<$action-setfield $tiddler=<<wf-form-tiles>> open="yes"/>""">
+<$let param={{{ [<r>match[mute]then[wf.until]else[wf.to]] }}}>
+<$let first={{{ [function[wf.buffer-field],<param>trim[]] ~[[+1d]] }}}>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/form/buffer" wf.tiles={{{ [<first>addprefix<wf-lb>addsuffix<wf-rb>] }}}/>
+<$action-deletefield $tiddler="$:/temp/rimir/work-focus/form/buffer" $field=<<param>>/>
+</$let>
+</$let>
+</$list>
+\end
+
+\procedure wf-fmt-weekday() [UTC]DDD
+\procedure wf-day-exprs() today +1d +2d +1w mon tue wed thu fri sat sun
+
+\procedure wf-day-options(field)
+\whitespace trim
+<option value="">the tile's day</option>
+<$list filter="[enlist<wf-day-exprs>]" variable="d">
+<option value=<<d>>><$text text={{{ [<d>match[today]then[today]] ~[<d>match[+1d]then[tomorrow]] ~[<d>match[+2d]then[in 2 days]] ~[<d>match[+1w]then[in a week]] ~[function[wf.resolve],<d>format:date<wf-fmt-weekday>addprefix[next ]] }}}/></option>
+</$list>
+<$list filter="[<currentTiddler>get<field>trim[]] -[enlist<wf-day-exprs>]" variable="d">
+<option value=<<d>>><$text text=<<d>>/></option>
+</$list>
+\end
+
+\procedure wf-edit-leave()
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/edit"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/edit-area"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/confirm"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/tab-rename"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/info-add"/>
+<<wf-form-close>>
+<!-- a save point (an open card is saved by leaving): refresh the dock once, after the writes -->
+<$action-wf-check/>
+\end
+
+\procedure wf-focus-panel()
+<$action-sendmessage $message="tm-focus-selector" $param=".wf-panel"/>
+\end
+
+\procedure wf-edit-toggle()
+<$list filter="[function[wf.editing]]" variable="on"><<wf-edit-leave>></$list>
+<$list filter="[[yes]] -[function[wf.editing]]" variable="off"><$action-setfield $tiddler="$:/temp/rimir/work-focus/edit" text="yes"/></$list>
+\end
+
+\procedure wf-escape()
+<$importvariables filter="[<wf-engine>]">
+<!-- the card counts only while it is on screen: Areas view and its area on the active tab -->
+<$let activetab={{{ [function[wf.active-tab]] }}}>
+<$let card={{{ [[$:/temp/rimir/work-focus/edit-area]get[text]] :filter[function[wf.tab-of],<currentTiddler>match<activetab>] :filter[function[wf.edit-view]match[areas]] :then[[yes]] }}}>
+<$list filter="[function[wf.form-open]]" variable="x"><<wf-form-close>></$list>
+<$list filter="[<card>] -[function[wf.form-open]]" variable="x"><$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/edit-area"/><$action-wf-check/></$list>
+<$list filter="[function[wf.editing]] -[function[wf.form-open]] -[<card>]" variable="x"><<wf-edit-leave>></$list>
+<$list filter="[[yes]] -[function[wf.editing]] -[function[wf.form-open]] -[<card>]" variable="x"><<wf-close>></$list>
+</$let>
+</$let>
+</$importvariables>
+\end
+
+\procedure wf-area-new(tab)
+<$importvariables filter="[<wf-engine>]">
+<$let area={{{ [function[wf.config-title],[$:/config/rimir/work-focus/areas/],[New area]] }}} tabvalue={{{ [function[wf.tab-value],<tab>] }}}>
+<$let list={{{ [function[wf.areas]] [<area>] +[format:titlelist[]join[ ]] }}}>
+<$action-setfield $tiddler=<<area>> tags="$:/tags/rimir/work-focus/area" caption="New area" wf.level="hint" wf.tab=<<tabvalue>> wf.filter=""/>
+<$action-setfield $tiddler="$:/tags/rimir/work-focus/area" list=<<list>>/>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/edit-area" text=<<area>>/>
+<$action-wf-check/>
+</$let>
+</$let>
+</$importvariables>
+\end
+
+\procedure wf-area-delete(area)
+<$importvariables filter="[<wf-engine>]">
+<$let list={{{ [function[wf.area-rest],<area>format:titlelist[]join[ ]] }}}>
+<$action-deletetiddler $tiddler=<<area>>/>
+<$action-setfield $tiddler="$:/tags/rimir/work-focus/area" list=<<list>>/>
+<$action-wf-check/>
+</$let>
+</$importvariables>
+\end
+
+\procedure wf-area-move(area, before, tab)
+<$importvariables filter="[<wf-engine>]">
+<$let tabvalue={{{ [function[wf.tab-value],<tab>] }}} tabkey={{{ [function[wf.tab-key],<tab>] }}}>
+<$let last={{{ [function[wf.area-rest],<area>] :filter[function[wf.tab-of],<currentTiddler>match<tabkey>] +[last[]] }}}>
+<$let anchor={{{ [<before>!is[blank]] ~[function[wf.area-rest],<area>allafter<last>first[]] }}}>
+<$action-setfield $tiddler=<<area>> wf.tab=<<tabvalue>>/>
+<$list filter="[<anchor>is[blank]]" variable="x">
+<$action-setfield $tiddler="$:/tags/rimir/work-focus/area" list={{{ [function[wf.area-rest],<area>] [<area>] +[format:titlelist[]join[ ]] }}}/>
+</$list>
+<$list filter="[<anchor>!is[blank]]" variable="x">
+<$action-setfield $tiddler="$:/tags/rimir/work-focus/area" list={{{ [function[wf.area-rest],<area>allbefore<anchor>] [<area>] [function[wf.area-rest],<area>allafter:include<anchor>] +[format:titlelist[]join[ ]] }}}/>
+</$list>
+<$action-wf-check/>
+</$let>
+</$let>
+</$let>
+</$importvariables>
+\end
+
+\procedure wf-tab-rename(old, new)
+<$importvariables filter="[<wf-engine>]">
+<$list filter="[function[wf.tab-areas],<old>]" variable="a"><$action-setfield $tiddler=<<a>> wf.tab=<<new>>/></$list>
+<$list filter="[[$:/state/rimir/work-focus/tab]get[text]match<old>]" variable="x"><$action-setfield $tiddler="$:/state/rimir/work-focus/tab" text=<<new>>/></$list>
+<$action-wf-check/>
+</$importvariables>
+\end
+
+\procedure wf-tab-new()
+<$importvariables filter="[<wf-engine>]">
+<$let tab={{{ [function[wf.new-tab]] }}}>
+<$transclude $variable="wf-area-new" tab=<<tab>>/>
+</$let>
+</$importvariables>
+\end
+
+\procedure wf-area-open(area)
+<$importvariables filter="[<wf-engine>]">
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/open" text="yes"/>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/edit" text="yes"/>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/edit-view" text="areas"/>
+<$action-setfield $tiddler="$:/state/rimir/work-focus/tab" text={{{ [function[wf.tab-of],<area>] }}}/>
+<$list filter="[[$:/temp/rimir/work-focus/edit-area]get[text]!match<area>]" variable="x"><$action-wf-check/></$list>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/edit-area" text=<<area>>/>
+</$importvariables>
+\end
+
+\procedure wf-form-open()
+<$let tag={{{ [<kind>match[group]then[$:/tags/rimir/work-focus/group]else[$:/tags/rimir/work-focus/action]] }}} side={{{ [<side>match[left]] ~[[right]] }}}>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/confirm"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/form"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/form/tiles"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/form/tile-label"/>
+<!-- value: the clicked tile's value; left/top: where the ring placed the form (px, blank = at the window edge) -->
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/form" kind=<<kind>> target=<<target>> item=<<item>> area=<<area>> side=<<side>> value=<<value>> left=<<left>> top=<<top>>/>
+<$list filter="[<target>is[blank]]" variable="x">
+<$action-createtiddler $basetitle="$:/temp/rimir/work-focus/form/buffer" $overwrite="yes" tags=<<tag>>/>
+<$list filter="[<preset>jsonindexes[]]" variable="f">
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/form/buffer" $field=<<f>> $value={{{ [<preset>jsonget<f>] }}}/>
+</$list>
+</$list>
+<$list filter="[<target>!is[blank]]" variable="x">
+<$action-createtiddler $basetitle="$:/temp/rimir/work-focus/form/buffer" $template=<<target>> $overwrite="yes"/>
+</$list>
+</$let>
+\end
+
+\procedure wf-form-close()
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/form"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/form/buffer"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/form/tiles"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/form/tile-label"/>
+<$action-deletetiddler $tiddler="$:/temp/rimir/work-focus/confirm"/>
+\end
+
+\procedure wf-form-store(target, caption, makedefault, name)
+<$let kind={{{ [function[wf.form-field],[kind]] }}}>
+<$let prefix={{{ [function[wf.kind-prefix],<kind>] }}}>
+<$let created={{{ [<target>!is[blank]get[created]] }}} title={{{ [<target>!is[blank]] ~[function[wf.config-title],<prefix>,<caption>] }}} groupname={{{ [<makedefault>match[yes]] :then[function[wf.buffer-field],[wf.group]] }}}>
+<$let grouptitle={{{ [function[wf.group-title],<groupname>] }}} slugname={{{ [<title>removeprefix<prefix>] }}}>
+<$action-createtiddler $basetitle=<<title>> $template="$:/temp/rimir/work-focus/form/buffer" $overwrite="yes" caption=<<caption>>/>
+<$action-deletefield $tiddler=<<title>> $field="wf-form.default"/>
+<$list filter="[<created>!is[blank]]" variable="x"><$action-setfield $tiddler=<<title>> created=<<created>>/></$list>
+<$list filter="[<target>is[blank]then<kind>match[group]]" variable="x">
+<$action-setfield $tiddler=<<title>> wf.name={{{ [<name>!is[blank]] ~[<slugname>] }}}/>
+</$list>
+<$list filter="[<grouptitle>!is[blank]then<kind>match[action]]" variable="x">
+<$action-setfield $tiddler=<<grouptitle>> wf.default=<<title>>/>
+<$action-deletefield $tiddler=<<grouptitle>> $field="wf.default-value"/>
+</$list>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/form" target=<<title>>/>
+</$let>
+</$let>
+</$let>
+</$let>
+\end
+
+\procedure wf-form-save()
+<$list filter="[function[wf.form-open]]" variable="x">
+<$transclude $variable="wf-form-store" target={{{ [function[wf.form-field],[target]] }}} caption={{{ [function[wf.buffer-field],[caption]] }}} makedefault={{{ [function[wf.buffer-field],[wf-form.default]] }}} name={{{ [function[wf.buffer-field],[wf.name]] }}}/>
+<$action-wf-check/>
+</$list>
+\end
+
+\procedure wf-form-duplicate()
+<$list filter="[function[wf.form-open]]" variable="x">
+<$let caption={{{ [function[wf.buffer-field],[caption]addsuffix[ (copy)]] }}} kind={{{ [function[wf.form-field],[kind]] }}}>
+<$let prefix={{{ [function[wf.kind-prefix],<kind>] }}}>
+<!-- computed before the store runs: the copy's title (and so its wf.name) is the next free config title -->
+<$let copyname={{{ [<kind>match[group]] :then[function[wf.config-title],<prefix>,<caption>removeprefix<prefix>] }}}>
+<$transclude $variable="wf-form-store" target="" caption=<<caption>> makedefault="no" name=<<copyname>>/>
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/form/buffer" caption=<<caption>>/>
+<$list filter="[<copyname>!is[blank]]" variable="x">
+<$action-setfield $tiddler="$:/temp/rimir/work-focus/form/buffer" wf.name=<<copyname>>/>
+</$list>
+<$action-wf-check/>
+</$let>
+</$let>
+</$let>
+</$list>
+\end
+
+\procedure wf-form-delete()
+<$list filter="[function[wf.form-open]]" variable="x">
+<$let target={{{ [function[wf.form-field],[target]] }}}>
+<$list filter="[<target>is[shadow]]" variable="y">
+<$action-setfield $tiddler=<<target>> wf.hidden="yes"/>
+</$list>
+<$list filter="[<target>!is[blank]!is[shadow]]" variable="y">
+<$action-deletetiddler $tiddler=<<target>>/>
+</$list>
+<<wf-form-close>>
+<$action-wf-check/>
+</$let>
+</$list>
+\end

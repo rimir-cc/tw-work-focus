@@ -4,13 +4,14 @@ A small dock in a corner of the page shows how many things need you: overdue, du
 
 ## Features
 
-- **Dock** — a pill strip with one count per area (alert, warning, hint). It refreshes only on reload, on ↻ and after an action, never while you type.
+- **Dock** — a pill strip with one count per area (alert, warning, hint). It refreshes on reload, on ↻, after an action and when an edit is saved (closing an area card, leaving edit mode, the Save of a form), never while you type.
 - **Panel** — click the dock to list the items by area, with tabs, "+ N more", and info lines such as "overdue 3d" or "changed 2d ago".
 - **Areas are your filters** — an area is a config tiddler with a filter; first match wins, so an item shows in one area only.
-- **Drag ring** — drag a row to the right: a half ring of groups (Move, Mute, Status, Open, …) opens; hover a group to fan out its tiles (Today, Tmrw, Mon, …); release to run.
+- **Drag ring** — drag a row to the right: a half ring of groups (Move, Mute, Status, Open, …) opens; hover a group to fan out its tiles (Today, Tmrw, the next weekdays, +1 wk); release to run.
 - **Acted marks** — an item you acted on stays in the panel with a mark ("→ Mon 9") until the next check.
 - **Mutes** — hide an item until a day; it shows again then. Unmute from the panel footer.
 - **Recipes** — an action is a config tiddler: pick a recipe (move a date, set a field, tag, create, open, mute) or write your own action string.
+- **Edit mode** — press ✎ in the panel header: area cards with a live match count, tabs, drag reorder; forms for actions and groups, also from the ring (drag in edit mode: ✎ on a tile; the form opens next to it) and from the settings tab. An action's tiles (e.g. the days of Move) are chips in its form: add, remove, reorder, rename.
 - **Generic** — no hard dependency on any other plugin; the example areas live in your wiki, not in the plugin.
 
 ## Prerequisites
@@ -20,7 +21,8 @@ A small dock in a corner of the page shows how many things need you: overdue, du
 
 ## Quick Start
 
-1. Install the plugin and restart the server: its JS modules (check, ring, date operators) load only at startup. A single-file wiki: save and reload.
+1. Install the plugin and restart the server: its JS modules (check, ring, date operators, `live-filter.js`, `live-widget.js`, `datalist.js`) load only at startup. A single-file wiki: save and reload.
 2. Create an area tiddler, tagged `$:/tags/rimir/work-focus/area`, with fields `caption: Overdue`, `wf.level: alert`, `wf.date-field: due-date`, `wf.info: date-relative` and the filter `wf.filter: [has[due-date]!has[completed-date]] :filter[get[due-date]wf-days[]compare:integer:lt[0]]`.
 3. Reload the page. The dock shows a red pill with the number of overdue items (no pill when nothing is overdue). Click it to see the items.
 4. Press on a row, drag to the right, hover *Move*, release on *Tmrw*.
+5. Press ✎ in the panel header to edit areas, actions and groups without writing tiddlers. Esc leaves edit mode.
