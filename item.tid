@@ -4,7 +4,7 @@ type: text/vnd.tiddlywiki
 \whitespace trim
 <!-- One item row. Vars: item, area. Click → navigate (wf-catch in layer); drag hooks on .wf-item (Task 6). -->
 
-<$let acted={{{ [function[wf.is-acted],<item>] }}} mark={{{ [function[wf.acted-mark],<item>] }}}>
+<$let acted={{{ [function[wf.is-acted],<item>,<area>] }}} mark={{{ [function[wf.acted-mark],<item>,<area>] }}}>
 <%if [<acted>!is[blank]] %>
 <div class="wf-item wf-acted" data-wf-item=<<item>> data-wf-area=<<area>> title=<<item>>>
 <div class="wf-item-label"><$text text={{{ [function[wf.label],<item>] }}}/></div>

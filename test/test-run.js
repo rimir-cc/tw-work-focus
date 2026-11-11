@@ -88,10 +88,50 @@ describe("work-focus run", function() {
 		put({title: "I1", rtest: "yes"});
 		var r = actions.run(widget, tile(shipped("mute"), "+2d"), "I1", "R/Area");
 		expect(r.ok).toBe(true);
-		expect(wiki.getTiddlerData(check.MUTES, {}).I1).toBe(day8(2));
+		expect(wiki.getTiddlerData(check.MUTES, {})).toEqual({"$:/rimir/work-focus/no-tab": {I1: day8(2)}});
 		var s = snapshot();
-		expect(s.muted).toContain("I1");
+		expect(s.muted["$:/rimir/work-focus/no-tab"]).toContain("I1");
 		expect(s.areas["R/Area"]).not.toContain("I1");
+	});
+
+	it("mute is tab-local; unmute lifts it and the mark in that tab only", function() {
+		put({title: "R/Area", "wf.date-field": "due", "wf.filter": "[all[tiddlers]field:rtest[yes]]", "wf.tab": "Tasks", tags: check.AREA_TAG});
+		put({title: "R/Other", "wf.filter": "[all[tiddlers]field:rtest[yes]]", "wf.tab": "Consistency", tags: check.AREA_TAG});
+		var odd = 'I "1" [[x]]';
+		put({title: odd, rtest: "yes"});
+		put({title: "I2", rtest: "yes"});
+		actions.run(widget, tile(shipped("mute"), "+2d"), odd, "R/Area");
+		actions.run(widget, tile(shipped("mute"), "+2d"), "I2", "R/Area");
+		actions.run(widget, tile(shipped("mute"), "+2d"), odd, "R/Other");
+		expect(wiki.getTiddlerData(check.MUTES, {})).toEqual({Tasks: {[odd]: day8(2), I2: day8(2)}, Consistency: {[odd]: day8(2)}});
+		var s = snapshot();
+		expect(s.muted).toEqual({Tasks: [odd, "I2"], Consistency: [odd]});
+		expect(s.areas["R/Other"]).toEqual(["I2"]);
+		var engine = check.importWidget(wiki, "\\import $:/plugins/rimir/work-focus/engine\n");
+		expect(wiki.filterTiddlers("[function[wf.muted],[Tasks]]", engine)).toEqual([odd, "I2"]);
+		expect(wiki.filterTiddlers("[function[wf.mute-until],[I2],[Tasks]]", engine)).toEqual([day8(2)]);
+		// unmute in Tasks: still muted in Consistency, Tasks marks gone, Consistency mark kept
+		var w = new Widget({}, {wiki: wiki, parentWidget: $tw.rootWidget, document: $tw.fakeDocument});
+		w.setVariable("item", odd);
+		w.setVariable("tab", "Tasks");
+		w.invokeActionString("\\import $:/plugins/rimir/work-focus/engine\n<<wf-unmute>>", w, null, {});
+		expect(wiki.getTiddlerData(check.MUTES, {})).toEqual({Tasks: {I2: day8(2)}, Consistency: {[odd]: day8(2)}});
+		s = snapshot();
+		expect(s.areas["R/Area"]).toEqual([odd]);
+		expect(s.areas["R/Other"]).toEqual(["I2"]);
+		expect(Object.keys(acted()["R/Area"])).toEqual(["I2"]);
+		expect(Object.keys(acted()["R/Other"])).toEqual([odd]);
+	});
+
+	it("unmute removes an older all-tabs mute entry", function() {
+		put({title: "I1", rtest: "yes"});
+		wiki.setTiddlerData(check.MUTES, {I1: "20991231"});
+		var w = new Widget({}, {wiki: wiki, parentWidget: $tw.rootWidget, document: $tw.fakeDocument});
+		w.setVariable("item", "I1");
+		w.setVariable("tab", "$:/rimir/work-focus/no-tab");
+		w.invokeActionString("\\import $:/plugins/rimir/work-focus/engine\n<<wf-unmute>>", w, null, {});
+		expect(wiki.getTiddlerData(check.MUTES, {})).toEqual({});
+		expect(snapshot().areas["R/Area"]).toEqual(["I1"]);
 	});
 
 	it("set-field, tag and create do their job", function() {
@@ -118,8 +158,27 @@ describe("work-focus run", function() {
 		put({title: "I1", due: "20261101", rtest: "yes"});
 		var r = actions.run(widget, tile(shipped("day-strip"), "+1d"), "I1", "R/Area");
 		expect(r.mark).toMatch(/^→ \w{3} \d+$/);
-		expect(acted().I1).toEqual({area: "R/Area", mark: r.mark});
+		expect(acted()["R/Area"].I1).toBe(r.mark);
 		expect(snapshot().checked).toMatch(/^\d{17}$/);
+	});
+
+	it("acting in one tab marks the row there; another tab lists it normally", function() {
+		put({title: "R/Area", "wf.date-field": "due", "wf.filter": "[all[tiddlers]field:rtest[yes]]", "wf.tab": "Tasks", tags: check.AREA_TAG});
+		put({title: "R/Later", "wf.filter": "[all[tiddlers]field:rtest[yes]]", "wf.tab": "Tasks", tags: check.AREA_TAG});
+		put({title: "R/Other", "wf.filter": "[all[tiddlers]field:rtest[yes]]", "wf.tab": "Consistency", tags: check.AREA_TAG});
+		put({title: "I1", due: "20261101", rtest: "yes"});
+		var r = actions.run(widget, tile(shipped("day-strip"), "+1d"), "I1", "R/Area");
+		var engine = check.importWidget(wiki, "\\import $:/plugins/rimir/work-focus/engine\n");
+		function run(filter) { return wiki.filterTiddlers(filter, engine); }
+		// tab Tasks: acted row in R/Area with its mark, not a plain row in R/Area or R/Later
+		expect(run("[function[wf.acted-in],[R/Area]]")).toEqual(["I1"]);
+		expect(run("[function[wf.acted-mark],[I1],[R/Area]]")).toEqual([r.mark]);
+		expect(run("[function[wf.rows],[R/Area]]")).toEqual([]);
+		expect(run("[function[wf.rows],[R/Later]]")).toEqual([]);
+		// tab Consistency: a plain row, no mark
+		expect(run("[function[wf.rows],[R/Other]]")).toEqual(["I1"]);
+		expect(run("[function[wf.is-acted],[I1],[R/Other]]")).toEqual([]);
+		expect(run("[function[wf.acted-in],[R/Other]]")).toEqual([]);
 	});
 
 	it("deferred actions leave mark and check to wf-finished", function() {
@@ -133,7 +192,7 @@ describe("work-focus run", function() {
 		expect(wiki.tiddlerExists(check.SNAPSHOT)).toBe(false);
 		var w = new Widget({}, {wiki: wiki, parentWidget: $tw.rootWidget, document: $tw.fakeDocument});
 		w.invokeActionString("\\import $:/plugins/rimir/work-focus/engine\n<<wf-finished item:'I1' area:'R/Area' mark:'done later'>>", w, null, {});
-		expect(acted().I1).toEqual({area: "R/Area", mark: "done later"});
+		expect(acted()["R/Area"].I1).toBe("done later");
 		expect(wiki.tiddlerExists(check.SNAPSHOT)).toBe(true);
 	});
 

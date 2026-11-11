@@ -20,7 +20,7 @@ The counts are a snapshot. It refreshes on reload, on ↻, after an action and w
 
 !! Q: An item I expected is missing.
 
-It may sit in an earlier area (first match wins), be muted (see the footer of the panel), or have a blank or non-date value in the area's date field (`wf-days` drops those).
+It may sit in an earlier area of the same tab (first match wins within a tab), be muted in this tab (see the footer of the panel; a mute only applies to the tab it was set in), or have a blank or non-date value in the area's date field (`wf-days` drops those).
 
 !! Q: The dock shows `!`.
 

@@ -54,7 +54,7 @@ type: text/vnd.tiddlywiki
 </$let>
 </$list>
 </div>
-<$let muted={{{ [function[wf.muted]] +[count[]] }}} show-state="$:/temp/rimir/work-focus/show-muted" showing={{{ [[$:/temp/rimir/work-focus/show-muted]get[text]match[yes]] }}}>
+<$let muted={{{ [function[wf.muted],<tab>] +[count[]] }}} show-state="$:/temp/rimir/work-focus/show-muted" showing={{{ [[$:/temp/rimir/work-focus/show-muted]get[text]match[yes]] }}}>
 <%if [<muted>!match[0]] %>
 <div class="wf-foot">
 <span class="wf-foot-count"><$text text={{{ [<muted>addprefix[🔕 ]addsuffix[ muted]] }}}/></span>
@@ -62,10 +62,10 @@ type: text/vnd.tiddlywiki
 </div>
 <%if [<showing>match[yes]] %>
 <div class="wf-muted-list">
-<$list filter="[function[wf.muted]]" variable="item">
+<$list filter="[function[wf.muted],<tab>]" variable="item">
 <div class="wf-muted-item">
 <$link to=<<item>> class="wf-muted-label"><$text text={{{ [function[wf.label],<item>] }}}/></$link>
-<span class="wf-muted-until"><$text text={{{ [function[wf.mute-until],<item>] :map[function[wf.day8],<currentTiddler>] +[addprefix[until ]] }}}/></span>
+<span class="wf-muted-until"><$text text={{{ [function[wf.mute-until],<item>,<tab>] :map[function[wf.day8],<currentTiddler>] +[addprefix[until ]] }}}/></span>
 <$button class="wf-link wf-unmute" actions=<<wf-unmute>>>unmute</$button>
 </div>
 </$list>

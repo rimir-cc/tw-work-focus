@@ -6,10 +6,10 @@ A small dock in a corner of the page shows how many things need you: overdue, du
 
 - **Dock** — a pill strip with one count per area (alert, warning, hint). It refreshes on reload, on ↻, after an action and when an edit is saved (closing an area card, leaving edit mode, the Save of a form), never while you type.
 - **Panel** — click the dock to list the items by area, with tabs, "+ N more", and info lines such as "overdue 3d" or "changed 2d ago".
-- **Areas are your filters** — an area is a config tiddler with a filter; first match wins, so an item shows in one area only.
+- **Areas are your filters** — an area is a config tiddler with a filter; first match wins within a tab, so an item shows in one area per tab – and may show in several tabs at once (tabs answer different questions).
 - **Drag ring** — drag a row to the right: a half ring of groups (Move, Mute, Status, Open, …) opens; hover a group to fan out its tiles (Today, Tmrw, the next weekdays, +1 wk); release to run.
 - **Acted marks** — an item you acted on stays in the panel with a mark ("→ Mon 9") until the next check.
-- **Mutes** — hide an item until a day; it shows again then. Unmute from the panel footer.
+- **Mutes** — hide an item until a day, in the tab you muted it in (other tabs still list it); it shows again then. Unmute from that tab's panel footer.
 - **Recipes** — an action is a config tiddler: pick a recipe (move a date, set a field, tag, create, open, mute) or write your own action string.
 - **Edit mode** — press ✎ in the panel header: area cards with a live match count, tabs, drag reorder; forms for actions and groups, also from the ring (drag in edit mode: ✎ on a tile; the form opens next to it) and from the settings tab. An action's tiles (e.g. the days of Move) are chips in its form: add, remove, reorder, rename.
 - **Generic** — no hard dependency on any other plugin; the example areas live in your wiki, not in the plugin.

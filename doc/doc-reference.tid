@@ -31,7 +31,7 @@ Order = tag order. The first area whose filter returns an item claims it. Drafts
 |`wf.filter` |Filter returning the item titles |
 |`wf.level` |`alert`, `warning` or `hint` (default `hint`). Dock order: alert, warning, hint |
 |`wf.date-field` |Field the info parts and date actions use (variable `date-field`) |
-|`wf.tab` |Tab name; blank = "General" |
+|`wf.tab` |Tab name; blank = "General". Placement is per tab: within a tab the first area in tag order takes an item; areas of other tabs list it as well |
 |`wf.info` |Space separated parts: `date-relative`, `date-relative:<field>`, `modified-ago`, `field:<name>` |
 |`wf.when-past`, `wf.when-today`, `wf.when-future` |Wikitext for `date-relative`; `<<n>>` = number of days. Defaults `<<n>>d ago`, `today`, `in <<n>>d` |
 |`wf.when-past.<field>`, `wf.when-today.<field>`, `wf.when-future.<field>` |Wording for `date-relative:<field>` (e.g. `wf.when-future.due-date: due in <<n>>d`); same defaults |
@@ -73,7 +73,7 @@ Variables in filters, hints, marks, tile labels and action strings: `item`, `are
 
 |!Shipped |!Parameters |
 |`move-date` |`wf.field` (default: the area's date field), `wf.to` (default: the tile value). No field: fails with "no field to set" |
-|`mute` |`wf.until` (default: the tile value) |
+|`mute` |`wf.until` (default: the tile value); mutes the item in the tab of the area it was dragged from |
 |`open` |none |
 |`set-field` |`wf.field`, `wf.value`. Blank `wf.field`: fails with "no field to set" |
 |`tag` |`wf.tag`, `wf.mode` (`add` or `remove`) |

@@ -4,5 +4,6 @@ type: text/vnd.tiddlywiki
 ! Changelog
 
 |!Version |!Date |!Changes |
+|0.1.2 |2026-11-11 |First match wins within a tab only: an item shows in one area per tab and may show in several tabs. Mutes are per tab too (`{tab: {item: day}}`): muting hides the item in the tab it was dragged from, the muted footer and unmute act on the current tab; older `{item: day}` entries keep muting in every tab until they expire. Acted marks are kept per area (`{area: {item: mark}}`), so acting in one tab leaves the item a plain row in another; `<$action-wf-check unacted-item unacted-tab>` drops an item's marks (in one tab). `wf.acted-mark` / `wf.is-acted` take the area, `wf.muted` / `wf.mute-until` the tab. |
 |0.1.1 |2026-11-07 |Edit mode: area cards with live counts, action and group forms, recipe forms, ring edit mode, settings tab; edits run the check on save; tiles editor in the action form (chips, own labels via `wf.tile-labels`), form next to the pinned ring; the Move day strip rolls forward from today (Today, Tmrw, +2d..+4d, +1 wk)|
 |0.1.0 |2026-11-06 |First version: dock, panel, check, mutes, action ring, recipes |

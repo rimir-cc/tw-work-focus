@@ -18,7 +18,7 @@ type: text/vnd.tiddlywiki
 
 |!Piece |!What it does |
 |`dates.js`, `date-operators.js` |Date expressions (`today`, `+1d`, `mon`, …), formatting, day differences. Filter operators `wf-date` and `wf-days` |
-|`check.js`, `action-wf-check.js` |Runs every area filter once (first match wins), applies mutes, writes the snapshot. `<$action-wf-check/>`. Also the shared filter helpers: `runFilter` (a throw or a `Filter Error: …` result is an error, never an item) and `globalWidget`/`importWidget` (filters run under `\import [subfilter{$:/core/config/GlobalImportFilter}]`, like the page template) |
+|`check.js`, `action-wf-check.js` |Runs every area filter once (first match wins within a tab: one area per tab, several tabs possible), applies each tab's mutes, writes the snapshot. `<$action-wf-check/>`. Also the shared filter helpers: `runFilter` (a throw or a `Filter Error: …` result is an error, never an item) and `globalWidget`/`importWidget` (filters run under `\import [subfilter{$:/core/config/GlobalImportFilter}]`, like the page template) |
 |`startup-check.tid` |Check on reload (`$:/tags/StartupAction/Browser`) |
 |`actions.js` |Which tiles and groups the ring shows for one item (filters see the global and the engine functions); builds and runs an action (`wf.requires` checked first) |
 |`ring-layer.js`, `ring-geometry.js` |The pointer gesture and the ring: plain DOM, laid out once per arc |
@@ -35,7 +35,7 @@ type: text/vnd.tiddlywiki
 
 !! Data flow
 
-# A check runs the area filters in tag order. An item goes to the first area that matches. Muted items go to the muted list.
+# A check runs the area filters in tag order. Within a tab an item goes to the first area that matches; other tabs place it on their own. An item muted in a tab goes to that tab's muted list.
 # The result is one JSON tiddler, the //snapshot// (`$:/temp/rimir/work-focus/snapshot`). Dock and panel only read it.
 # A drag asks `actions.select` for the ring: every action whose filter returns something for this item, grouped by `wf.group`.
 # A release runs the action string with the item's variables, then writes an //acted mark// and checks again.
@@ -43,9 +43,9 @@ type: text/vnd.tiddlywiki
 !! State tiddlers
 
 |!Tiddler |!Content |
-|`$:/temp/rimir/work-focus/snapshot` |`{"checked", "areas": {area: [items]}, "muted": [items], "errors": {area: message}}` |
-|`$:/temp/rimir/work-focus/acted` |`{item: {"area", "mark"}}`; cleared by a reload or ↻ |
-|`$:/rimir/work-focus/mutes` |`{item: "YYYYMMDD"}`, saved with the wiki (not under `$:/state/`, which TW does not sync): the day the item shows again |
+|`$:/temp/rimir/work-focus/snapshot` |`{"checked", "areas": {area: [items]}, "muted": {tab: [items]}, "errors": {area: message}}`; the unnamed tab's key is `$:/rimir/work-focus/no-tab` |
+|`$:/temp/rimir/work-focus/acted` |`{area: {item: mark}}` – per area, so an item acted on in one tab is a plain row in another; cleared by a reload or ↻, an item's marks by unmuting it |
+|`$:/rimir/work-focus/mutes` |`{tab: {item: "YYYYMMDD"}}` (General = `$:/rimir/work-focus/no-tab`), saved with the wiki (not under `$:/state/`, which TW does not sync): the day the item shows again in that tab. An older entry `{item: "YYYYMMDD"}` (from 0.1.1) mutes in every tab until it expires; unmuting it removes it |
 |`$:/temp/rimir/work-focus/open` |`yes` while the panel is open |
 |`$:/temp/rimir/work-focus/more/<area>` |`yes` after "+ N more" was clicked |
 |`$:/temp/rimir/work-focus/show-muted` |`yes` while the muted list is shown |

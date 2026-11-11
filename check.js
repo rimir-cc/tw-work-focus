@@ -3,8 +3,9 @@ title: $:/plugins/rimir/work-focus/check.js
 type: application/javascript
 module-type: library
 
-The work-focus check: runs every area filter once (first match wins), applies
-mutes and writes one snapshot tiddler. Never runs on wiki change events.
+The work-focus check: runs every area filter once (first match wins within a tab:
+an item shows in at most one area per tab, but may show in several tabs), applies
+the mutes of each tab and writes one snapshot tiddler. Never runs on wiki change events.
 
 \*/
 "use strict";
@@ -16,12 +17,14 @@ var SNAPSHOT = "$:/temp/rimir/work-focus/snapshot";
 var ACTED = "$:/temp/rimir/work-focus/acted";
 var MUTES = "$:/rimir/work-focus/mutes";
 var AREA_TAG = "$:/tags/rimir/work-focus/area";
+var NO_TAB = "$:/rimir/work-focus/no-tab"; // the unnamed (General) tab, as engine.tid's wf.no-tab
 var GLOBAL_IMPORT = "\\import [subfilter{$:/core/config/GlobalImportFilter}]\n";
 
 exports.SNAPSHOT = SNAPSHOT;
 exports.ACTED = ACTED;
 exports.MUTES = MUTES;
 exports.AREA_TAG = AREA_TAG;
+exports.NO_TAB = NO_TAB;
 
 // Area titles in tag order (drafts left out).
 exports.areas = function(wiki) {
@@ -64,26 +67,53 @@ exports.runFilter = function(wiki, filter, widget, source) {
 	return {list: list, error: null};
 };
 
-// Mutes still in force: value is a day after today.
+// The tab an area belongs to: its trimmed wf.tab, NO_TAB for the unnamed (General) tab.
+exports.tabOf = function(wiki, area) {
+	var tiddler = wiki.getTiddler(area);
+	return (tiddler && String(tiddler.fields["wf.tab"] || "").trim()) || NO_TAB;
+};
+
+// Mutes still in force (the day is after today). The mutes tiddler holds {tab: {item: day}};
+// an older entry {item: day} (a string value) mutes the item in every tab.
 exports.activeMutes = function(wiki, now) {
 	var data = wiki.getTiddlerData(MUTES, {}), result = {};
-	Object.keys(data).forEach(function(item) {
-		var days = dates.daysFrom(data[item], now);
-		if(days !== null && days > 0) {
-			result[item] = String(data[item]).trim();
+	function live(day) {
+		var days = dates.daysFrom(day, now);
+		return days !== null && days > 0;
+	}
+	Object.keys(data).forEach(function(key) {
+		var value = data[key];
+		if(value && typeof value === "object") {
+			Object.keys(value).forEach(function(item) {
+				if(live(value[item])) {
+					result[key] = result[key] || {};
+					result[key][item] = String(value[item]).trim();
+				}
+			});
+		} else if(live(value)) {
+			result[key] = String(value).trim();
 		}
 	});
 	return result;
 };
 
+// Is the item muted in the tab (by that tab's mute or an older all-tabs entry)?
+function isMuted(mutes, tab, item) {
+	var own = mutes[tab];
+	return !!(own && typeof own === "object" && Object.prototype.hasOwnProperty.call(own, item)) ||
+		(Object.prototype.hasOwnProperty.call(mutes, item) && typeof mutes[item] === "string");
+}
+
 exports.compute = function(wiki, now) {
 	var mutes = exports.activeMutes(wiki, now),
-		snapshot = {checked: $tw.utils.stringifyDate(now), areas: {}, muted: [], errors: {}},
-		claimed = Object.create(null),
+		snapshot = {checked: $tw.utils.stringifyDate(now), areas: {}, muted: {}, errors: {}}, // muted: {tab: [items]}
+		claimed = Object.create(null), // tab -> {item: true}
 		widget = exports.globalWidget(wiki);
 	exports.areas(wiki).forEach(function(area) {
 		var filter = wiki.getTiddler(area).fields["wf.filter"] || "", found = [],
-			result = exports.runFilter(wiki, filter, widget);
+			result = exports.runFilter(wiki, filter, widget),
+			tab = exports.tabOf(wiki, area),
+			taken = claimed[tab] = claimed[tab] || Object.create(null);
 		if(result.error) {
 			snapshot.errors[area] = result.error;
 		}
@@ -93,12 +123,13 @@ exports.compute = function(wiki, now) {
 				// a draft is never an item
 				return;
 			}
-			if(Object.prototype.hasOwnProperty.call(mutes, item)) {
-				if(snapshot.muted.indexOf(item) === -1) {
-					snapshot.muted.push(item);
+			if(isMuted(mutes, tab, item)) {
+				var muted = snapshot.muted[tab] = snapshot.muted[tab] || [];
+				if(muted.indexOf(item) === -1) {
+					muted.push(item);
 				}
-			} else if(!claimed[item]) {
-				claimed[item] = true;
+			} else if(!taken[item]) {
+				taken[item] = true;
 				found.push(item);
 			}
 		});
@@ -112,7 +143,8 @@ exports.write = function(wiki, now, opts) {
 	var data = wiki.getTiddlerData(MUTES, null), active;
 	if(data) {
 		active = exports.activeMutes(wiki, now);
-		if(Object.keys(active).length !== Object.keys(data).length) {
+		// drop expired mutes and emptied tabs
+		if(JSON.stringify(active) !== JSON.stringify(data)) {
 			wiki.setTiddlerData(MUTES, active);
 		}
 	}
@@ -121,9 +153,24 @@ exports.write = function(wiki, now, opts) {
 	if(opts.clearActed) {
 		wiki.deleteTiddler(ACTED);
 	}
-	if(opts.acted) {
+	// acted marks: {area: {item: mark}}, so an item acted on in one tab stays a plain row in another
+	if(opts.acted || opts.unacted) {
 		var acted = wiki.getTiddlerData(ACTED, {});
-		acted[opts.acted.item] = {area: opts.acted.area, mark: opts.acted.mark};
+		if(opts.unacted) {
+			Object.keys(acted).forEach(function(area) {
+				if(opts.unactedTab && exports.tabOf(wiki, area) !== opts.unactedTab) {
+					return;
+				}
+				delete acted[area][opts.unacted];
+				if(!Object.keys(acted[area]).length) {
+					delete acted[area];
+				}
+			});
+		}
+		if(opts.acted) {
+			acted[opts.acted.area] = acted[opts.acted.area] || {};
+			acted[opts.acted.area][opts.acted.item] = opts.acted.mark;
+		}
 		wiki.setTiddlerData(ACTED, acted);
 	}
 	return snapshot;

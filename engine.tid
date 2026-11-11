@@ -10,8 +10,14 @@ type: text/vnd.tiddlywiki
 \function wf.count(area) [function[wf.listed],<area>] +[count[]]
 \function wf.error(area) [function[wf.snapshot]jsonget[errors],<area>]
 \function wf.checked() [function[wf.snapshot]jsonget[checked]]
-\function wf.muted() [function[wf.snapshot]jsonget[muted]]
-\function wf.mute-until(item) [[$:/rimir/work-focus/mutes]get[text]jsonget<item>]
+\function wf.muted(tab) [function[wf.snapshot]jsonget[muted],<tab>]
+\function wf.mutes-json() [[$:/rimir/work-focus/mutes]get[text]] ~[[{}]] +[first[]]
+\function wf.legacy-mute(item) [function[wf.mutes-json]jsontype<item>match[string]] :map[function[wf.mutes-json]jsonget<item>]
+\function wf.mute-until(item, tab) [function[wf.mutes-json]jsonget<tab>,<item>] ~[function[wf.legacy-mute],<item>]
+\function wf.mutes-tab-ready(tab) [function[wf.mutes-json]] :filter[jsontype<tab>match[object]] ~[function[wf.mutes-json]jsonset:object<tab>]
+\function wf.mutes-with(tab, item, day) [function[wf.mutes-tab-ready],<tab>] +[jsonset<tab>,<item>,<day>]
+\function wf.mutes-without(tab, item) [function[wf.mutes-json]jsondelete<tab>,<item>] :map[function[wf.drop-legacy],<currentTiddler>,<item>]
+\function wf.drop-legacy(json, item) [<json>jsontype<item>match[string]] :then[<json>jsondelete<item>] ~[<json>]
 \function wf.level(area) [<area>get[wf.level]trim[]] :intersection[enlist[alert warning hint]] ~[[hint]]
 \function wf.level-areas(level) [function[wf.areas]] :filter[function[wf.level],<currentTiddler>match<level>]
 \function wf.has-chip(area) [function[wf.count],<area>!match[0]] [function[wf.error],<area>] +[first[]]
@@ -26,11 +32,11 @@ type: text/vnd.tiddlywiki
 \function wf.multi-tab() [function[wf.tabs]count[]compare:integer:gt[1]then[yes]]
 \function wf.tab-areas(tab) [function[wf.areas]] :filter[function[wf.tab-of],<currentTiddler>match<tab>]
 \function wf.tab-count(tab) [function[wf.tab-areas],<tab>] :reduce[function[wf.count],<currentTiddler>add<accumulator>] ~[[0]]
-\function wf.acted() [function[wf.acted-json]jsonindexes[]]
-\function wf.acted-in(area) [function[wf.acted]] :filter[function[wf.acted-json]jsonget<currentTiddler>,[area]match<area>]
-\function wf.acted-mark(item) [function[wf.acted-json]jsonget<item>,[mark]]
-\function wf.is-acted(item) [function[wf.acted]match<item>]
-\function wf.rows(area) [function[wf.hits],<area>] -[function[wf.acted]]
+\function wf.acted-in(area) [function[wf.acted-json]jsonindexes<area>]
+\function wf.acted-mark(item, area) [function[wf.acted-json]jsonget<area>,<item>]
+\function wf.is-acted(item, area) [function[wf.acted-in],<area>match<item>]
+\function wf.tab-acted(area) [function[wf.tab-of],<area>] :map:flat[function[wf.tab-areas],<currentTiddler>] :map:flat[function[wf.acted-in],<currentTiddler>]
+\function wf.rows(area) [function[wf.hits],<area>] -[function[wf.tab-acted],<area>]
 \function wf.has-content(area) [function[wf.rows],<area>] [function[wf.acted-in],<area>] [function[wf.error],<area>] +[first[]]
 \function wf.view-areas(tab) [function[wf.tab-areas],<tab>] :filter[function[wf.has-content],<currentTiddler>]
 \function wf.limit() [[$:/config/rimir/work-focus/section-limit]get[text]trim[]regexp[^\d+$]] ~[[5]]
@@ -90,9 +96,9 @@ type: text/vnd.tiddlywiki
 \end
 
 \procedure wf-unmute()
-<$action-setfield $tiddler="$:/rimir/work-focus/mutes" $index=<<item>>/>
-<$action-setfield $tiddler="$:/temp/rimir/work-focus/acted" $index=<<item>>/>
-<$action-wf-check/>
+<!-- vars: item, tab (the panel's active tab); lifts the mute in that tab (an older all-tabs mute entirely) -->
+<$action-setfield $tiddler="$:/rimir/work-focus/mutes" text={{{ [function[wf.mutes-without],<tab>,<item>] }}} type="application/json"/>
+<$action-wf-check unacted-item=<<item>> unacted-tab=<<tab>>/>
 \end
 
 \procedure wf-catch()

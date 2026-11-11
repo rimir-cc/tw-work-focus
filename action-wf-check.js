@@ -7,7 +7,8 @@ Action widget `<$action-wf-check/>` — runs the work-focus check.
 
 Attributes:
   clear-acted   "yes" deletes the acted marks
-  acted-item, acted-area, acted-mark   record one acted mark
+  acted-item, acted-area, acted-mark   record one acted mark (per area)
+  unacted-item  drops that item's acted marks (unacted-tab: only in the areas of that tab)
 \*/
 "use strict";
 
@@ -38,6 +39,10 @@ ActionCheckWidget.prototype.invokeAction = function(triggeringWidget,event) {
 	}
 	if(item) {
 		opts.acted = {item: item, area: this.getAttribute("acted-area", ""), mark: this.getAttribute("acted-mark", "")};
+	}
+	if(this.getAttribute("unacted-item", "")) {
+		opts.unacted = this.getAttribute("unacted-item");
+		opts.unactedTab = this.getAttribute("unacted-tab", "");
 	}
 	check.write(this.wiki, new Date(), opts);
 	return true;
